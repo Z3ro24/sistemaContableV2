@@ -3,6 +3,8 @@ import LoginPage from '../pages/auth/LoginPage';
 import RegisterPage from '../pages/auth/RegisterPage';
 import HomePage from '../pages/app/HomePage';
 import ProfilePage from '../pages/app/ProfilePage';
+import WorkersPage from '../pages/app/WorkersPage';
+import CompaniesPage from '../pages/app/CompaniesPage';
 import NotFound from '../pages/404';
 import AppLayout from '../layouts/AppLayout';
 import { useAuthInit } from '../hooks/useAuthInit';
@@ -38,7 +40,9 @@ const App = () => {
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/transactions" element={<HomePage />} />
             <Route path="/reports" element={<HomePage />} />
-            <Route path="/settings" element={<HomePage />} />
+            <Route path="/settings" element={<Navigate to="/settings/workers" replace />} />
+            <Route path="/settings/workers" element={<WorkersPage />} />
+            <Route path="/settings/companies" element={<CompaniesPage />} />
             <Route path="*" element={<NotFound />} />
           </Route>
           <Route path="/" element={<Navigate to="/home" replace />} />

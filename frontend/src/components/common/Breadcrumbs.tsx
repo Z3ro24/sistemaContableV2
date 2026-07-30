@@ -8,6 +8,8 @@ const routeNameMap: Record<string, string> = {
   settings: 'Configuración',
   transactions: 'Transacciones',
   reports: 'Reportes',
+  workers: 'Personas',
+  companies: 'Empresas',
 };
 
 export const Breadcrumbs: React.FC = () => {

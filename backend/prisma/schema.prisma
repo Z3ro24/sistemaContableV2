@@ -22,6 +22,7 @@ model User {
   updatedAt     DateTime       @updatedAt @map("upddated_at")
   deleteAt      DateTime?      @map("deleteAt")
   refreshTokens RefreshToken[]
+  workers       Worker[]
 
   @@map("users")
 }
@@ -36,4 +37,29 @@ model RefreshToken {
   createdAt DateTime @default(now()) @map("created_at")
 
   @@map("refresh_tokens")
+}
+
+model Worker {
+  id        Int       @id @default(autoincrement())
+  name      String
+  rut       String    @unique
+  userId    String    @map("user_id") @db.Uuid
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companies Company[]
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  @@map("workers")
+}
+
+model Company {
+  id         Int      @id @default(autoincrement())
+  name       String
+  rutCompany String   @unique @map("rut_company")
+  workerId   Int      @map("worker_id")
+  worker     Worker   @relation(fields: [workerId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@map("companies")
 }

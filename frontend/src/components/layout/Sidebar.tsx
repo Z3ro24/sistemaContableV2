@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { Menu, MenuButton, MenuItems, MenuItem } from '@headlessui/react';
+import { Menu, MenuButton, MenuItems, MenuItem, Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/react';
 import { useAppDispatch, useAppSelector } from '../../store/store';
 import { logout } from '../../store/slices/auth.slice';
 import authService from '../../services/authService';
@@ -17,6 +17,9 @@ import {
   ChevronRightIcon,
   UserIcon,
   ChevronUpDownIcon,
+  ChevronDownIcon,
+  UserGroupIcon,
+  BuildingOfficeIcon,
 } from '@heroicons/react/24/outline';
 
 export const Sidebar: React.FC = () => {
@@ -105,7 +108,34 @@ export const Sidebar: React.FC = () => {
           <SidebarItem to="/home" icon={HomeIcon} label="Inicio" isCollapsed={isCollapsed} />
           <SidebarItem to="/transactions" icon={CreditCardIcon} label="Transacciones" isCollapsed={isCollapsed} />
           <SidebarItem to="/reports" icon={ChartPieIcon} label="Reportes" isCollapsed={isCollapsed} />
-          <SidebarItem to="/settings" icon={Cog6ToothIcon} label="Configuración" isCollapsed={isCollapsed} />
+
+          {/* Settings Accordion Sub-Menu */}
+          {isCollapsed ? (
+            <SidebarItem to="/settings/workers" icon={Cog6ToothIcon} label="Configuración" isCollapsed={true} />
+          ) : (
+            <Disclosure defaultOpen={false}>
+              {({ open }) => (
+                <div className="space-y-1">
+                  <DisclosureButton className="group relative flex w-full items-center justify-between rounded-xl px-3.5 py-2.5 text-sm font-medium text-[#787774] border border-transparent transition-all duration-200 hover:bg-white/50 hover:text-[#37352F] focus:outline-none">
+                    <div className="flex items-center gap-3">
+                      <Cog6ToothIcon className="h-5 w-5 flex-shrink-0 text-[#787774] transition-colors group-hover:text-[#37352F]" />
+                      <span>Configuración</span>
+                    </div>
+                    <ChevronDownIcon
+                      className={`h-4 w-4 text-[#787774] transition-transform duration-200 ${
+                        open ? 'rotate-180 transform' : ''
+                      }`}
+                    />
+                  </DisclosureButton>
+
+                  <DisclosurePanel transition className="space-y-1 pl-4 transition duration-150 ease-out data-[closed]:opacity-0">
+                    <SidebarItem to="/settings/workers" icon={UserGroupIcon} label="Personas" isCollapsed={false} />
+                    <SidebarItem to="/settings/companies" icon={BuildingOfficeIcon} label="Empresas" isCollapsed={false} />
+                  </DisclosurePanel>
+                </div>
+              )}
+            </Disclosure>
+          )}
         </nav>
       </div>
 
@@ -172,7 +202,7 @@ export const Sidebar: React.FC = () => {
               {({ focus }) => (
                 <button
                   type="button"
-                  onClick={() => navigate('/settings')}
+                  onClick={() => navigate('/settings/workers')}
                   className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium transition-colors ${
                     focus ? 'bg-[#37352F] text-white' : 'text-[#37352F]'
                   }`}

@@ -8,6 +8,8 @@ import { APP_GUARD } from '@nestjs/core';
 import { AuthModule } from './auth/auth.module';
 import { AuthGuard } from './auth/guards/auth.guard';
 import { RolesGuard } from './auth/guards/roles.guard';
+import { WorkersModule } from './workers/workers.module';
+import { CompaniesModule } from './companies/companies.module';
 
 @Module({
   imports: [
@@ -20,6 +22,8 @@ import { RolesGuard } from './auth/guards/roles.guard';
         limit: 100,
       },
     ]),
+    WorkersModule,
+    CompaniesModule,
   ],
   controllers: [AppController],
   providers: [
