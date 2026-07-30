@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import LoginPage from '../pages/auth/LoginPage';
 import RegisterPage from '../pages/auth/RegisterPage';
 import HomePage from '../pages/app/HomePage';
+import ProfilePage from '../pages/app/ProfilePage';
 import NotFound from '../pages/404';
 import AppLayout from '../layouts/AppLayout';
 import { useAuthInit } from '../hooks/useAuthInit';
@@ -34,6 +35,7 @@ const App = () => {
           {/* Rutas privadas envueltas en AppLayout */}
           <Route element={<AppLayout />}>
             <Route path="/home" element={<HomePage />} />
+            <Route path="/profile" element={<ProfilePage />} />
             <Route path="/transactions" element={<HomePage />} />
             <Route path="/reports" element={<HomePage />} />
             <Route path="/settings" element={<HomePage />} />

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from '../components/layout/Sidebar';
+import Breadcrumbs from '../components/common/Breadcrumbs';
 
 export const AppLayout: React.FC = () => {
   return (
@@ -16,6 +17,7 @@ export const AppLayout: React.FC = () => {
 
       {/* Main Content Area */}
       <main className="relative flex-1 overflow-y-auto p-8">
+        <Breadcrumbs />
         <Outlet />
       </main>
     </div>
