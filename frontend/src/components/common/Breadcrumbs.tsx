@@ -10,6 +10,7 @@ const routeNameMap: Record<string, string> = {
   reports: 'Reportes',
   workers: 'Personas',
   companies: 'Empresas',
+  edit: 'Editar',
 };
 
 export const Breadcrumbs: React.FC = () => {

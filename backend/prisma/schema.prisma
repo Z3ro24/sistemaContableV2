@@ -23,6 +23,7 @@ model User {
   deleteAt      DateTime?      @map("deleteAt")
   refreshTokens RefreshToken[]
   workers       Worker[]
+  companies     Company[]
 
   @@map("users")
 }
@@ -39,27 +40,31 @@ model RefreshToken {
   @@map("refresh_tokens")
 }
 
-model Worker {
-  id        Int       @id @default(autoincrement())
-  name      String
-  rut       String    @unique
-  userId    String    @map("user_id") @db.Uuid
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  companies Company[]
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
-
-  @@map("workers")
-}
-
 model Company {
   id         Int      @id @default(autoincrement())
   name       String
-  rutCompany String   @unique @map("rut_company")
-  workerId   Int      @map("worker_id")
-  worker     Worker   @relation(fields: [workerId], references: [id], onDelete: Cascade)
+  rutCompany String   @map("rut_company")
+  userId     String   @map("user_id") @db.Uuid
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workers    Worker[]
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
 
+  @@unique([rutCompany, userId])
   @@map("companies")
+}
+
+model Worker {
+  id        Int      @id @default(autoincrement())
+  name      String
+  rut       String
+  userId    String   @map("user_id") @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyId Int?     @map("company_id")
+  company   Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([rut, userId])
+  @@map("workers")
 }

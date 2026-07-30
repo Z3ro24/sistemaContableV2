@@ -3,6 +3,7 @@ import { ExclamationTriangleIcon, XMarkIcon } from '@heroicons/react/24/solid';
 
 interface AlertBannerProps {
   message?: string;
+  type?: 'error' | 'success' | 'warning';
   onDismiss?: () => void;
 }
 
