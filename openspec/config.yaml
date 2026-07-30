@@ -15,6 +15,13 @@ stack:
     forms: React Hook Form
     validation: Zod
     http: Axios
+    design:
+      - TailwindCSS
+      - HeadlessUI
+      - Responsive Design
+      - Mobile First
+      - Lucide
+      - Dark Mode
 
   backend:
     framework: NestJS
