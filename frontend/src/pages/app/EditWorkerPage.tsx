@@ -7,6 +7,12 @@ import companiesService from '../../services/companiesService';
 import { formatRut, validateRut } from '../../utils/rutUtils';
 import { workerSchema } from '../../validators/workerValidator';
 import AlertBanner from '../../components/common/AlertBanner';
+import CustomSelect from '../../components/common/CustomSelect';
+
+interface CompanyOption {
+  value: string;
+  label: string;
+}
 
 export const EditWorkerPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -33,6 +39,14 @@ export const EditWorkerPage: React.FC = () => {
     queryKey: ['companies'],
     queryFn: companiesService.getAll,
   });
+
+  const companyOptions: CompanyOption[] = [
+    { value: '', label: '-- Sin Empresa Asignada --' },
+    ...companies.map((comp) => ({
+      value: comp.id.toString(),
+      label: `${comp.name} (${comp.rutCompany})`,
+    })),
+  ];
 
   useEffect(() => {
     if (worker) {
@@ -116,6 +130,8 @@ export const EditWorkerPage: React.FC = () => {
     );
   }
 
+  const selectedOption = companyOptions.find((opt) => opt.value === companyId) || companyOptions[0];
+
   return (
     <div className="space-y-6 max-w-3xl selection:bg-neutral-200">
       {/* Top Action Bar */}
@@ -181,23 +197,17 @@ export const EditWorkerPage: React.FC = () => {
             {rutError && <p className="mt-1 text-xs text-rose-600 font-medium">{rutError}</p>}
           </div>
 
-          {/* Field: Company Select */}
+          {/* Field: Company Select (React Select) */}
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-[#787774] mb-1.5">
               Empresa Asignada
             </label>
-            <select
-              value={companyId}
-              onChange={(e) => setCompanyId(e.target.value)}
-              className="w-full rounded-xl border border-neutral-200 bg-white px-3.5 py-2.5 text-sm text-[#37352F] shadow-2xs focus:border-[#37352F] focus:outline-none focus:ring-1 focus:ring-[#37352F]"
-            >
-              <option value="">-- Sin Empresa Asignada --</option>
-              {companies.map((comp) => (
-                <option key={comp.id} value={comp.id}>
-                  {comp.name} ({comp.rutCompany})
-                </option>
-              ))}
-            </select>
+            <CustomSelect<CompanyOption>
+              options={companyOptions}
+              value={selectedOption}
+              onChange={(option) => setCompanyId(option?.value || '')}
+              placeholder="Seleccionar empresa..."
+            />
           </div>
 
           {/* Form Actions */}

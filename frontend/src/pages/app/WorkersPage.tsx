@@ -8,7 +8,6 @@ import {
   TrashIcon,
   BuildingOfficeIcon,
   MagnifyingGlassIcon,
-  FunnelIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
 } from '@heroicons/react/24/outline';
@@ -16,9 +15,15 @@ import workersService from '../../services/workersService';
 import companiesService from '../../services/companiesService';
 import WorkerModal from '../../components/modals/WorkerModal';
 import AlertBanner from '../../components/common/AlertBanner';
+import CustomSelect from '../../components/common/CustomSelect';
 import { cleanRut } from '../../utils/rutUtils';
 
 const ITEMS_PER_PAGE = 10;
+
+interface FilterCompanyOption {
+  value: string;
+  label: string;
+}
 
 export const WorkersPage: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -41,6 +46,18 @@ export const WorkersPage: React.FC = () => {
     queryKey: ['companies'],
     queryFn: companiesService.getAll,
   });
+
+  const filterCompanyOptions: FilterCompanyOption[] = useMemo(
+    () => [
+      { value: 'all', label: 'Todas las Empresas' },
+      { value: 'unassigned', label: 'Sin Empresa Asignada' },
+      ...companies.map((comp) => ({
+        value: comp.id.toString(),
+        label: comp.name,
+      })),
+    ],
+    [companies]
+  );
 
   const deleteMutation = useMutation({
     mutationFn: workersService.delete,
@@ -95,6 +112,9 @@ export const WorkersPage: React.FC = () => {
     }
   };
 
+  const selectedFilterOption =
+    filterCompanyOptions.find((opt) => opt.value === selectedCompanyId) || filterCompanyOptions[0];
+
   return (
     <div className="space-y-6 max-w-5xl selection:bg-neutral-200">
       {/* Header Banner */}
@@ -135,26 +155,18 @@ export const WorkersPage: React.FC = () => {
             placeholder="Buscar por nombre o RUT (ej: 19.876.543-2)..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded-2xl border border-white/80 bg-white/70 pl-10 pr-4 py-2.5 text-xs text-[#37352F] placeholder-[#787774]/70 shadow-2xs backdrop-blur-md focus:border-[#37352F] focus:outline-none focus:ring-1 focus:ring-[#37352F]"
+            className="w-full rounded-2xl border border-white/80 bg-white/70 pl-10 pr-4 py-2 text-xs text-[#37352F] placeholder-[#787774]/70 shadow-2xs backdrop-blur-md focus:border-[#37352F] focus:outline-none focus:ring-1 focus:ring-[#37352F]"
           />
         </div>
 
-        {/* Company Filter Select */}
-        <div className="relative w-full sm:w-64">
-          <FunnelIcon className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#787774]" />
-          <select
-            value={selectedCompanyId}
-            onChange={(e) => setSelectedCompanyId(e.target.value)}
-            className="w-full appearance-none rounded-2xl border border-white/80 bg-white/70 pl-10 pr-8 py-2.5 text-xs font-medium text-[#37352F] shadow-2xs backdrop-blur-md focus:border-[#37352F] focus:outline-none focus:ring-1 focus:ring-[#37352F]"
-          >
-            <option value="all">Todas las Empresas</option>
-            <option value="unassigned">Sin Empresa Asignada</option>
-            {companies.map((comp) => (
-              <option key={comp.id} value={comp.id}>
-                {comp.name}
-              </option>
-            ))}
-          </select>
+        {/* Company Filter Select (React Select) */}
+        <div className="w-full sm:w-64">
+          <CustomSelect<FilterCompanyOption>
+            options={filterCompanyOptions}
+            value={selectedFilterOption}
+            onChange={(option) => setSelectedCompanyId(option?.value || 'all')}
+            placeholder="Filtrar por empresa..."
+          />
         </div>
       </div>
 
