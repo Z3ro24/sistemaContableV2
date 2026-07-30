@@ -89,7 +89,31 @@ Utilizamos la fuente nativa del sistema (`font-sans`):
 
 ---
 
-### C. Botones (`Button Tokens`)
+### C. Sidebar Colapsable Glassmorphic (`Sidebar` & `SidebarItem`)
+
+```tsx
+/* Contenedor Principal con Animación de Ancho */
+<aside className={`relative flex h-screen flex-col justify-between border-r border-white/80 bg-white/60 backdrop-blur-3xl transition-all duration-300 ease-in-out ${
+  isCollapsed ? 'w-20 p-3' : 'w-64 p-5'
+}`}>
+  {/* Toggle Button */}
+  <button onClick={() => setIsCollapsed(!isCollapsed)}>
+    <ChevronLeftIcon className="h-4 w-4" />
+  </button>
+  
+  {/* SidebarItem (Centra icono al colapsar y oculta label) */}
+  <NavLink className={`flex items-center gap-3 rounded-xl py-2.5 text-sm ${
+    isCollapsed ? 'justify-center px-2' : 'justify-between px-3.5'
+  }`}>
+    <Icon className="h-5 w-5" />
+    {!isCollapsed && <span>Inicio</span>}
+  </NavLink>
+</aside>
+```
+
+---
+
+### D. Botones (`Button Tokens`)
 
 #### 1. Botón Principal Notion Graphite
 ```tsx
@@ -108,7 +132,7 @@ Utilizamos la fuente nativa del sistema (`font-sans`):
 
 ---
 
-### D. Badges y Pills de Estado Glassmorphic
+### E. Badges y Pills de Estado Glassmorphic
 
 ```tsx
 /* Badge Glass Activo / Pagado */
@@ -128,4 +152,4 @@ Utilizamos la fuente nativa del sistema (`font-sans`):
 
 1. **Mantener Capas de Reflejo**: Usar `backdrop-blur-3xl` o `backdrop-blur-2xl` sobre contenedores `bg-white/60` o `bg-white/70` para garantizar translucidez realista.
 2. **Orbes de Luz**: Colocar siempre fondos de degradado sutiles (`blur-[130px]`) detrás de módulos o secciones principales para potenciar la refracción del cristal.
-3. **Bordes Brilantes en Blanqueo**: Utilizar `border-white/80` o `border-white/60` para enfatizar los biseles del vidrio.
+3. **Colapso Fluido**: Transiciones de ancho de 300ms (`transition-all duration-300 ease-in-out`) para elementos colapsables como la barra lateral.
