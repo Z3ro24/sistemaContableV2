@@ -12,6 +12,7 @@ import {
   ArchiveBoxIcon,
   TableCellsIcon,
   ArrowPathIcon,
+  BuildingLibraryIcon,
 } from '@heroicons/react/24/outline';
 import payrollsService, { type Payroll } from '../../services/payrollsService';
 import workersService from '../../services/workersService';
@@ -19,6 +20,7 @@ import companiesService from '../../services/companiesService';
 import CustomSelect from '../../components/common/CustomSelect';
 import AlertBanner from '../../components/common/AlertBanner';
 import PayrollPdfModal from '../../components/modals/PayrollPdfModal';
+import BankPayrollModal from '../../components/modals/BankPayrollModal';
 import {
   exportPaymentCsv,
   generateUnifiedPdf,
@@ -33,6 +35,7 @@ interface SelectOption {
 export const PayrollsPage: React.FC = () => {
   const queryClient = useQueryClient();
   const [isCalcModalOpen, setIsCalcModalOpen] = useState(false);
+  const [isBankModalOpen, setIsBankModalOpen] = useState(false);
   const [selectedPayroll, setSelectedPayroll] = useState<Payroll | null>(null);
   const [pdfModalPayroll, setPdfModalPayroll] = useState<Payroll | null>(null);
 
@@ -203,7 +206,7 @@ export const PayrollsPage: React.FC = () => {
               Liquidaciones de Sueldo
             </h1>
             <p className="text-xs text-[#787774]">
-              Cálculo automatizado de haberes, descuentos AFP/Salud/Impuesto y exportación masiva.
+              Cálculo automatizado de haberes, exportación masiva y archivo de nómina para transferencia bancaria.
             </p>
           </div>
         </div>
@@ -238,80 +241,93 @@ export const PayrollsPage: React.FC = () => {
           />
         </div>
 
-        {/* Mass Export Menu Dropdown */}
-        <Menu as="div" className="relative self-end sm:self-auto">
-          <MenuButton
-            disabled={payrolls.length === 0 || isExporting}
-            className="flex items-center gap-2 rounded-xl border border-neutral-300 bg-white px-4 py-2 text-xs font-semibold text-[#37352F] shadow-2xs hover:bg-neutral-50 transition-all disabled:opacity-50"
+        <div className="flex items-center gap-2 self-end sm:self-auto">
+          {/* Bank Payroll Transfer File Generator Button */}
+          <button
+            type="button"
+            disabled={payrolls.length === 0}
+            onClick={() => setIsBankModalOpen(true)}
+            className="flex items-center gap-2 rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-2 text-xs font-semibold text-emerald-900 shadow-2xs hover:bg-emerald-100 transition-all disabled:opacity-50"
           >
-            <ArrowDownTrayIcon className="h-4 w-4 text-[#787774]" />
-            <span>Exportar Masivo</span>
-            <ChevronDownIcon className="h-3.5 w-3.5 text-[#787774]" />
-          </MenuButton>
+            <BuildingLibraryIcon className="h-4 w-4 text-emerald-700" />
+            <span>Nómina Bancaria</span>
+          </button>
 
-          <MenuItems
-            transition
-            className="absolute right-0 mt-2 w-64 origin-top-right rounded-2xl border border-white/90 bg-white/95 p-2 shadow-2xl backdrop-blur-2xl transition duration-150 ease-out data-[closed]:scale-95 data-[closed]:opacity-0 focus:outline-none z-50 space-y-0.5"
-          >
-            <div className="px-3 py-1.5 border-b border-neutral-200/60 mb-1 text-[10px] font-bold uppercase tracking-wider text-[#787774]">
-              Formatos de Exportación ({payrolls.length})
-            </div>
+          {/* Mass Export Menu Dropdown */}
+          <Menu as="div" className="relative">
+            <MenuButton
+              disabled={payrolls.length === 0 || isExporting}
+              className="flex items-center gap-2 rounded-xl border border-neutral-300 bg-white px-4 py-2 text-xs font-semibold text-[#37352F] shadow-2xs hover:bg-neutral-50 transition-all disabled:opacity-50"
+            >
+              <ArrowDownTrayIcon className="h-4 w-4 text-[#787774]" />
+              <span>Exportar Masivo</span>
+              <ChevronDownIcon className="h-3.5 w-3.5 text-[#787774]" />
+            </MenuButton>
 
-            <MenuItem>
-              {({ focus }) => (
-                <button
-                  type="button"
-                  onClick={handleExportUnifiedPdf}
-                  className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium transition-colors ${
-                    focus ? 'bg-[#37352F] text-white' : 'text-[#37352F] hover:bg-neutral-100'
-                  }`}
-                >
-                  <DocumentTextIcon className="h-4 w-4 flex-shrink-0" />
-                  <div className="text-left">
-                    <span className="block font-bold">📄 PDF Unificado</span>
-                    <span className="text-[10px] opacity-80">1 solo PDF con todas las liquidaciones</span>
-                  </div>
-                </button>
-              )}
-            </MenuItem>
+            <MenuItems
+              transition
+              className="absolute right-0 mt-2 w-64 origin-top-right rounded-2xl border border-white/90 bg-white/95 p-2 shadow-2xl backdrop-blur-2xl transition duration-150 ease-out data-[closed]:scale-95 data-[closed]:opacity-0 focus:outline-none z-50 space-y-0.5"
+            >
+              <div className="px-3 py-1.5 border-b border-neutral-200/60 mb-1 text-[10px] font-bold uppercase tracking-wider text-[#787774]">
+                Formatos de Exportación ({payrolls.length})
+              </div>
 
-            <MenuItem>
-              {({ focus }) => (
-                <button
-                  type="button"
-                  onClick={handleExportZip}
-                  className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium transition-colors ${
-                    focus ? 'bg-[#37352F] text-white' : 'text-[#37352F] hover:bg-neutral-100'
-                  }`}
-                >
-                  <ArchiveBoxIcon className="h-4 w-4 flex-shrink-0 text-amber-600" />
-                  <div className="text-left">
-                    <span className="block font-bold">📦 Paquete ZIP</span>
-                    <span className="text-[10px] opacity-80">PDFs individuales por trabajador</span>
-                  </div>
-                </button>
-              )}
-            </MenuItem>
+              <MenuItem>
+                {({ focus }) => (
+                  <button
+                    type="button"
+                    onClick={handleExportUnifiedPdf}
+                    className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium transition-colors ${
+                      focus ? 'bg-[#37352F] text-white' : 'text-[#37352F] hover:bg-neutral-100'
+                    }`}
+                  >
+                    <DocumentTextIcon className="h-4 w-4 flex-shrink-0" />
+                    <div className="text-left">
+                      <span className="block font-bold">📄 PDF Unificado</span>
+                      <span className="text-[10px] opacity-80">1 solo PDF con todas las liquidaciones</span>
+                    </div>
+                  </button>
+                )}
+              </MenuItem>
 
-            <MenuItem>
-              {({ focus }) => (
-                <button
-                  type="button"
-                  onClick={handleExportCsv}
-                  className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium transition-colors ${
-                    focus ? 'bg-[#37352F] text-white' : 'text-[#37352F] hover:bg-neutral-100'
-                  }`}
-                >
-                  <TableCellsIcon className="h-4 w-4 flex-shrink-0 text-emerald-600" />
-                  <div className="text-left">
-                    <span className="block font-bold">📊 Nómina Excel / CSV</span>
-                    <span className="text-[10px] opacity-80">Resumen con datos bancarios de pago</span>
-                  </div>
-                </button>
-              )}
-            </MenuItem>
-          </MenuItems>
-        </Menu>
+              <MenuItem>
+                {({ focus }) => (
+                  <button
+                    type="button"
+                    onClick={handleExportZip}
+                    className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium transition-colors ${
+                      focus ? 'bg-[#37352F] text-white' : 'text-[#37352F] hover:bg-neutral-100'
+                    }`}
+                  >
+                    <ArchiveBoxIcon className="h-4 w-4 flex-shrink-0 text-amber-600" />
+                    <div className="text-left">
+                      <span className="block font-bold">📦 Paquete ZIP</span>
+                      <span className="text-[10px] opacity-80">PDFs individuales por trabajador</span>
+                    </div>
+                  </button>
+                )}
+              </MenuItem>
+
+              <MenuItem>
+                {({ focus }) => (
+                  <button
+                    type="button"
+                    onClick={handleExportCsv}
+                    className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium transition-colors ${
+                      focus ? 'bg-[#37352F] text-white' : 'text-[#37352F] hover:bg-neutral-100'
+                    }`}
+                  >
+                    <TableCellsIcon className="h-4 w-4 flex-shrink-0 text-emerald-600" />
+                    <div className="text-left">
+                      <span className="block font-bold">📊 Nómina Excel / CSV</span>
+                      <span className="text-[10px] opacity-80">Resumen con datos bancarios de pago</span>
+                    </div>
+                  </button>
+                )}
+              </MenuItem>
+            </MenuItems>
+          </Menu>
+        </div>
       </div>
 
       {/* Content Area */}
@@ -675,6 +691,14 @@ export const PayrollsPage: React.FC = () => {
         isOpen={!!pdfModalPayroll}
         onClose={() => setPdfModalPayroll(null)}
         payroll={pdfModalPayroll}
+      />
+
+      {/* Modal 4: Chilean Bank Payroll Mass Transfer Generator */}
+      <BankPayrollModal
+        isOpen={isBankModalOpen}
+        onClose={() => setIsBankModalOpen(false)}
+        payrolls={payrolls}
+        companyName={getSelectedCompanyName()}
       />
     </div>
   );
