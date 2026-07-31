@@ -6,12 +6,14 @@ import {
   DocumentTextIcon,
   TrashIcon,
   XMarkIcon,
+  ArrowDownTrayIcon,
 } from '@heroicons/react/24/outline';
 import payrollsService, { type Payroll } from '../../services/payrollsService';
 import workersService from '../../services/workersService';
 import companiesService from '../../services/companiesService';
 import CustomSelect from '../../components/common/CustomSelect';
 import AlertBanner from '../../components/common/AlertBanner';
+import PayrollPdfModal from '../../components/modals/PayrollPdfModal';
 
 interface SelectOption {
   value: string;
@@ -22,6 +24,7 @@ export const PayrollsPage: React.FC = () => {
   const queryClient = useQueryClient();
   const [isCalcModalOpen, setIsCalcModalOpen] = useState(false);
   const [selectedPayroll, setSelectedPayroll] = useState<Payroll | null>(null);
+  const [pdfModalPayroll, setPdfModalPayroll] = useState<Payroll | null>(null);
 
   // Form state
   const [workerId, setWorkerId] = useState('');
@@ -78,7 +81,7 @@ export const PayrollsPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['payrolls'] });
       setIsCalcModalOpen(false);
       setModalApiError(null);
-      setSelectedPayroll(data);
+      setPdfModalPayroll(data);
     },
     onError: (err: any) => {
       const message = err.response?.data?.message || 'Error al calcular la liquidación';
@@ -144,7 +147,7 @@ export const PayrollsPage: React.FC = () => {
               Liquidaciones de Sueldo
             </h1>
             <p className="text-xs text-[#787774]">
-              Cálculo automatizado de haberes, descuentos AFP/Salud/Impuesto y emisión de sueldos.
+              Cálculo automatizado de haberes, descuentos AFP/Salud/Impuesto y emisión de sueldos en PDF.
             </p>
           </div>
         </div>
@@ -227,9 +230,18 @@ export const PayrollsPage: React.FC = () => {
                     <div className="flex items-center justify-end gap-2">
                       <button
                         type="button"
+                        onClick={() => setPdfModalPayroll(payroll)}
+                        title="Ver / Exportar Liquidación PDF"
+                        className="flex items-center gap-1.5 rounded-lg border border-neutral-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-[#37352F] hover:bg-neutral-100 transition-colors shadow-2xs"
+                      >
+                        <ArrowDownTrayIcon className="h-3.5 w-3.5 text-emerald-700" />
+                        <span>PDF</span>
+                      </button>
+                      <button
+                        type="button"
                         onClick={() => setSelectedPayroll(payroll)}
-                        title="Ver Desglose de Liquidación"
-                        className="rounded-lg p-1.5 border border-neutral-200 bg-white text-[#37352F] hover:bg-neutral-100 transition-colors shadow-2xs"
+                        title="Ver Desglose Rápido"
+                        className="rounded-lg p-1.5 border border-neutral-200 bg-white text-[#787774] hover:bg-neutral-100 hover:text-[#37352F] transition-colors shadow-2xs"
                       >
                         <DocumentTextIcon className="h-4 w-4" />
                       </button>
@@ -250,7 +262,7 @@ export const PayrollsPage: React.FC = () => {
         </div>
       )}
 
-      {/* Modal: Calculate Payroll */}
+      {/* Modal 1: Calculate Payroll */}
       {isCalcModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-xs">
           <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl border border-white/80 bg-white/95 p-6 shadow-2xl backdrop-blur-2xl">
@@ -415,7 +427,7 @@ export const PayrollsPage: React.FC = () => {
         </div>
       )}
 
-      {/* Modal: View Pay Slip Breakdown */}
+      {/* Modal 2: View Pay Slip Quick Breakdown */}
       {selectedPayroll && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-xs">
           <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl border border-white/80 bg-white/95 p-8 shadow-2xl backdrop-blur-2xl space-y-6">
@@ -493,7 +505,20 @@ export const PayrollsPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex justify-end">
+            <div className="flex justify-between items-center">
+              <button
+                type="button"
+                onClick={() => {
+                  const p = selectedPayroll;
+                  setSelectedPayroll(null);
+                  setPdfModalPayroll(p);
+                }}
+                className="flex items-center gap-1.5 rounded-xl border border-neutral-300 bg-white px-4 py-2 text-xs font-semibold text-[#37352F] hover:bg-neutral-100 transition-colors shadow-2xs"
+              >
+                <ArrowDownTrayIcon className="h-4 w-4 text-emerald-700" />
+                <span>Ver / Exportar PDF</span>
+              </button>
+
               <button
                 type="button"
                 onClick={() => setSelectedPayroll(null)}
@@ -505,6 +530,13 @@ export const PayrollsPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Modal 3: Official Printable & Downloadable PDF Liquidación Modal */}
+      <PayrollPdfModal
+        isOpen={!!pdfModalPayroll}
+        onClose={() => setPdfModalPayroll(null)}
+        payroll={pdfModalPayroll}
+      />
     </div>
   );
 };
