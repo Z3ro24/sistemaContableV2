@@ -9,6 +9,7 @@ import CompaniesPage from '../pages/app/CompaniesPage';
 import EditCompanyPage from '../pages/app/EditCompanyPage';
 import MonthlyParametersPage from '../pages/app/MonthlyParametersPage';
 import PayrollsPage from '../pages/app/PayrollsPage';
+import LrePage from '../pages/app/LrePage';
 import NotFound from '../pages/404';
 import AppLayout from '../layouts/AppLayout';
 import { useAuthInit } from '../hooks/useAuthInit';
@@ -45,6 +46,7 @@ const App = () => {
             <Route path="/transactions" element={<HomePage />} />
             <Route path="/reports" element={<HomePage />} />
             <Route path="/payrolls" element={<PayrollsPage />} />
+            <Route path="/payrolls/lre" element={<LrePage />} />
             <Route path="/settings" element={<Navigate to="/settings/workers" replace />} />
             <Route path="/settings/workers" element={<WorkersPage />} />
             <Route path="/settings/workers/edit/:id" element={<EditWorkerPage />} />

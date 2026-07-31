@@ -13,6 +13,7 @@ const routeNameMap: Record<string, string> = {
   edit: 'Editar',
   payrolls: 'Liquidaciones',
   parameters: 'Parámetros Mensuales',
+  lre: 'Libro de Remuneraciones (LRE)',
 };
 
 export const Breadcrumbs: React.FC = () => {

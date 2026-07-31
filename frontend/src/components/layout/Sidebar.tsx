@@ -21,6 +21,7 @@ import {
   UserGroupIcon,
   BuildingOfficeIcon,
   DocumentTextIcon,
+  TableCellsIcon,
 } from '@heroicons/react/24/outline';
 
 export const Sidebar: React.FC = () => {
@@ -131,7 +132,7 @@ export const Sidebar: React.FC = () => {
 
               <MenuItems
                 transition
-                className="absolute left-full top-0 ml-3 w-56 origin-top-left rounded-2xl border border-white/90 bg-white/95 p-2 shadow-2xl backdrop-blur-2xl transition duration-150 ease-out data-[closed]:scale-95 data-[closed]:opacity-0 focus:outline-none z-50"
+                className="absolute left-full top-0 ml-3 w-56 origin-top-left rounded-2xl border border-white/90 bg-white/95 p-2 shadow-2xl backdrop-blur-2xl transition duration-150 ease-out data-[closed]:scale-95 data-[closed]:opacity-0 focus:outline-none z-50 space-y-0.5"
               >
                 <div className="px-3 py-1.5 border-b border-neutral-200/60 mb-1 text-[10px] font-bold uppercase tracking-wider text-[#787774]">
                   Remuneración
@@ -148,6 +149,21 @@ export const Sidebar: React.FC = () => {
                     >
                       <DocumentTextIcon className="h-4 w-4 flex-shrink-0" />
                       <span>Liquidación de Sueldo</span>
+                    </button>
+                  )}
+                </MenuItem>
+
+                <MenuItem>
+                  {({ focus }) => (
+                    <button
+                      type="button"
+                      onClick={() => navigate('/payrolls/lre')}
+                      className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium transition-colors ${
+                        focus ? 'bg-[#37352F] text-white' : 'text-[#37352F] hover:bg-neutral-100'
+                      }`}
+                    >
+                      <TableCellsIcon className="h-4 w-4 flex-shrink-0 text-emerald-700" />
+                      <span>Libro de Remun. (LRE DT)</span>
                     </button>
                   )}
                 </MenuItem>
@@ -187,6 +203,7 @@ export const Sidebar: React.FC = () => {
 
                   <DisclosurePanel transition className="space-y-1 pl-4 transition duration-150 ease-out data-[closed]:opacity-0">
                     <SidebarItem to="/payrolls" icon={DocumentTextIcon} label="Liquidación de Sueldo" isCollapsed={false} />
+                    <SidebarItem to="/payrolls/lre" icon={TableCellsIcon} label="Libro de Remun. (LRE DT)" isCollapsed={false} />
                     <SidebarItem to="/settings/workers" icon={UserGroupIcon} label="Fichas de empleado" isCollapsed={false} />
                   </DisclosurePanel>
                 </div>
@@ -196,7 +213,7 @@ export const Sidebar: React.FC = () => {
 
           {/* 3. Settings Accordion Sub-Menu */}
           {isCollapsed ? (
-            /* Collapsed State: Popover Menu for Accordion Items (Elevated z-50 above dashboard) */
+            /* Collapsed State: Popover Menu for Accordion Items */
             <Menu as="div" className="relative flex justify-center w-full">
               <MenuButton
                 title="Configuración"
@@ -211,7 +228,7 @@ export const Sidebar: React.FC = () => {
 
               <MenuItems
                 transition
-                className="absolute left-full top-0 ml-3 w-56 origin-top-left rounded-2xl border border-white/90 bg-white/95 p-2 shadow-2xl backdrop-blur-2xl transition duration-150 ease-out data-[closed]:scale-95 data-[closed]:opacity-0 focus:outline-none z-50"
+                className="absolute left-full top-0 ml-3 w-56 origin-top-left rounded-2xl border border-white/90 bg-white/95 p-2 shadow-2xl backdrop-blur-2xl transition duration-150 ease-out data-[closed]:scale-95 data-[closed]:opacity-0 focus:outline-none z-50 space-y-0.5"
               >
                 <div className="px-3 py-1.5 border-b border-neutral-200/60 mb-1 text-[10px] font-bold uppercase tracking-wider text-[#787774]">
                   Configuración
@@ -326,7 +343,7 @@ export const Sidebar: React.FC = () => {
             )}
           </MenuButton>
 
-          {/* Dropdown Items (Pops upwards above footer) */}
+          {/* Dropdown Items */}
           <MenuItems
             transition
             className="absolute bottom-full left-0 mb-2 w-56 origin-bottom-left rounded-2xl border border-white/90 bg-white/90 p-1.5 shadow-xl backdrop-blur-2xl transition duration-150 ease-out data-[closed]:scale-95 data-[closed]:opacity-0 focus:outline-none z-50"
@@ -385,7 +402,7 @@ export const Sidebar: React.FC = () => {
           </MenuItems>
         </Menu>
 
-        {/* Logout Button (Black & White Notion Style) */}
+        {/* Logout Button */}
         <button
           type="button"
           onClick={handleLogout}

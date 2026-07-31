@@ -13,6 +13,7 @@ import { CompaniesModule } from './companies/companies.module';
 import { CatalogsModule } from './catalogs/catalogs.module';
 import { MonthlyParametersModule } from './monthly-parameters/monthly-parameters.module';
 import { PayrollsModule } from './payrolls/payrolls.module';
+import { LreModule } from './lre/lre.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { PayrollsModule } from './payrolls/payrolls.module';
     CatalogsModule,
     MonthlyParametersModule,
     PayrollsModule,
+    LreModule,
   ],
   controllers: [AppController],
   providers: [
