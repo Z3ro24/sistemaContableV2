@@ -11,6 +11,8 @@ const routeNameMap: Record<string, string> = {
   workers: 'Personas',
   companies: 'Empresas',
   edit: 'Editar',
+  payrolls: 'Liquidaciones',
+  parameters: 'Parámetros Mensuales',
 };
 
 export const Breadcrumbs: React.FC = () => {

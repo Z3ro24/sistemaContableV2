@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Menu, MenuButton, MenuItems, MenuItem, Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/react';
 import { useAppDispatch, useAppSelector } from '../../store/store';
 import { logout } from '../../store/slices/auth.slice';
@@ -11,6 +11,8 @@ import {
   ChartBarIcon,
   CreditCardIcon,
   ChartPieIcon,
+  BanknotesIcon,
+  AdjustmentsHorizontalIcon,
   Cog6ToothIcon,
   ArrowRightOnRectangleIcon,
   ChevronLeftIcon,
@@ -26,7 +28,10 @@ export const Sidebar: React.FC = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAppSelector((state) => state.auth);
+
+  const isSettingsActive = location.pathname.startsWith('/settings');
 
   const logoutMutation = useMutation({
     mutationFn: authService.logout,
@@ -59,7 +64,7 @@ export const Sidebar: React.FC = () => {
 
   return (
     <aside
-      className={`relative flex h-screen flex-col justify-between border-r border-white/80 bg-white/60 backdrop-blur-3xl transition-all duration-300 ease-in-out selection:bg-neutral-200 ${
+      className={`relative z-40 flex h-screen flex-col justify-between border-r border-white/80 bg-white/60 backdrop-blur-3xl transition-all duration-300 ease-in-out selection:bg-neutral-200 ${
         isCollapsed ? 'w-20 p-3' : 'w-64 p-5'
       }`}
     >
@@ -107,13 +112,81 @@ export const Sidebar: React.FC = () => {
           )}
           <SidebarItem to="/home" icon={HomeIcon} label="Inicio" isCollapsed={isCollapsed} />
           <SidebarItem to="/transactions" icon={CreditCardIcon} label="Transacciones" isCollapsed={isCollapsed} />
+          <SidebarItem to="/payrolls" icon={BanknotesIcon} label="Liquidaciones" isCollapsed={isCollapsed} />
           <SidebarItem to="/reports" icon={ChartPieIcon} label="Reportes" isCollapsed={isCollapsed} />
 
           {/* Settings Accordion Sub-Menu */}
           {isCollapsed ? (
-            <SidebarItem to="/settings/workers" icon={Cog6ToothIcon} label="Configuración" isCollapsed={true} />
+            /* Collapsed State: Popover Menu for Accordion Items (Elevated z-50 above dashboard) */
+            <Menu as="div" className="relative flex justify-center w-full">
+              <MenuButton
+                title="Configuración"
+                className={`relative flex h-10 w-10 items-center justify-center rounded-xl border border-transparent transition-all duration-200 ${
+                  isSettingsActive
+                    ? 'border-white/80 bg-white/80 text-[#37352F] shadow-2xs backdrop-blur-md'
+                    : 'text-[#787774] hover:bg-white/50 hover:text-[#37352F]'
+                }`}
+              >
+                <Cog6ToothIcon className="h-5 w-5 flex-shrink-0" />
+              </MenuButton>
+
+              <MenuItems
+                transition
+                className="absolute left-full top-0 ml-3 w-56 origin-top-left rounded-2xl border border-white/90 bg-white/95 p-2 shadow-2xl backdrop-blur-2xl transition duration-150 ease-out data-[closed]:scale-95 data-[closed]:opacity-0 focus:outline-none z-50"
+              >
+                <div className="px-3 py-1.5 border-b border-neutral-200/60 mb-1 text-[10px] font-bold uppercase tracking-wider text-[#787774]">
+                  Configuración
+                </div>
+
+                <MenuItem>
+                  {({ focus }) => (
+                    <button
+                      type="button"
+                      onClick={() => navigate('/settings/workers')}
+                      className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium transition-colors ${
+                        focus ? 'bg-[#37352F] text-white' : 'text-[#37352F] hover:bg-neutral-100'
+                      }`}
+                    >
+                      <UserGroupIcon className="h-4 w-4 flex-shrink-0" />
+                      <span>Personas</span>
+                    </button>
+                  )}
+                </MenuItem>
+
+                <MenuItem>
+                  {({ focus }) => (
+                    <button
+                      type="button"
+                      onClick={() => navigate('/settings/companies')}
+                      className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium transition-colors ${
+                        focus ? 'bg-[#37352F] text-white' : 'text-[#37352F] hover:bg-neutral-100'
+                      }`}
+                    >
+                      <BuildingOfficeIcon className="h-4 w-4 flex-shrink-0" />
+                      <span>Empresas</span>
+                    </button>
+                  )}
+                </MenuItem>
+
+                <MenuItem>
+                  {({ focus }) => (
+                    <button
+                      type="button"
+                      onClick={() => navigate('/settings/parameters')}
+                      className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium transition-colors ${
+                        focus ? 'bg-[#37352F] text-white' : 'text-[#37352F] hover:bg-neutral-100'
+                      }`}
+                    >
+                      <AdjustmentsHorizontalIcon className="h-4 w-4 flex-shrink-0" />
+                      <span>Parámetros Mensuales</span>
+                    </button>
+                  )}
+                </MenuItem>
+              </MenuItems>
+            </Menu>
           ) : (
-            <Disclosure defaultOpen={false}>
+            /* Expanded State: Standard Disclosure Accordion */
+            <Disclosure defaultOpen={isSettingsActive}>
               {({ open }) => (
                 <div className="space-y-1">
                   <DisclosureButton className="group relative flex w-full items-center justify-between rounded-xl px-3.5 py-2.5 text-sm font-medium text-[#787774] border border-transparent transition-all duration-200 hover:bg-white/50 hover:text-[#37352F] focus:outline-none">
@@ -131,6 +204,7 @@ export const Sidebar: React.FC = () => {
                   <DisclosurePanel transition className="space-y-1 pl-4 transition duration-150 ease-out data-[closed]:opacity-0">
                     <SidebarItem to="/settings/workers" icon={UserGroupIcon} label="Personas" isCollapsed={false} />
                     <SidebarItem to="/settings/companies" icon={BuildingOfficeIcon} label="Empresas" isCollapsed={false} />
+                    <SidebarItem to="/settings/parameters" icon={AdjustmentsHorizontalIcon} label="Parámetros Mensuales" isCollapsed={false} />
                   </DisclosurePanel>
                 </div>
               )}

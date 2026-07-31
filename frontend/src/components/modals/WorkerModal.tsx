@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { XMarkIcon, UserGroupIcon } from '@heroicons/react/24/outline';
 import workersService from '../../services/workersService';
 import companiesService from '../../services/companiesService';
+import catalogsService from '../../services/catalogsService';
 import { formatRut, validateRut } from '../../utils/rutUtils';
 import { workerSchema } from '../../validators/workerValidator';
 import AlertBanner from '../common/AlertBanner';
@@ -14,33 +15,89 @@ interface WorkerModalProps {
   onClose: () => void;
 }
 
-interface CompanyOption {
+interface SelectOption {
   value: string;
   label: string;
 }
 
 export const WorkerModal: React.FC<WorkerModalProps> = ({ isOpen, onClose }) => {
   const [name, setName] = useState('');
+  const [paternalLastName, setPaternalLastName] = useState('');
+  const [maternalLastName, setMaternalLastName] = useState('');
   const [rut, setRut] = useState('');
-  const [companyId, setCompanyId] = useState<string>('');
+  const [entryDate, setEntryDate] = useState('');
+  const [baseSalary, setBaseSalary] = useState('');
+
+  const [companyId, setCompanyId] = useState('');
+  const [afpId, setAfpId] = useState('');
+  const [healthInstitutionId, setHealthInstitutionId] = useState('');
+  const [healthAgreedUf, setHealthAgreedUf] = useState('');
+  const [contractTypeId, setContractTypeId] = useState('');
+  const [bankId, setBankId] = useState('');
+  const [bankAccountType, setBankAccountType] = useState('');
+  const [bankAccountNumber, setBankAccountNumber] = useState('');
+
   const [rutError, setRutError] = useState('');
   const [apiError, setApiError] = useState<string | null>(null);
 
   const queryClient = useQueryClient();
 
-  // Fetch companies for dropdown select
+  // Fetch Companies
   const { data: companies = [] } = useQuery({
     queryKey: ['companies'],
     queryFn: companiesService.getAll,
     enabled: isOpen,
   });
 
-  const companyOptions: CompanyOption[] = [
+  // Fetch Catalogs
+  const { data: afps = [] } = useQuery({
+    queryKey: ['afps'],
+    queryFn: catalogsService.getAfps,
+    enabled: isOpen,
+  });
+
+  const { data: healthInstitutions = [] } = useQuery({
+    queryKey: ['healthInstitutions'],
+    queryFn: catalogsService.getHealthInstitutions,
+    enabled: isOpen,
+  });
+
+  const { data: contractTypes = [] } = useQuery({
+    queryKey: ['contractTypes'],
+    queryFn: catalogsService.getContractTypes,
+    enabled: isOpen,
+  });
+
+  const { data: banks = [] } = useQuery({
+    queryKey: ['banks'],
+    queryFn: catalogsService.getBanks,
+    enabled: isOpen,
+  });
+
+  // Convert to options
+  const companyOptions: SelectOption[] = [
     { value: '', label: '-- Sin Empresa Asignada --' },
-    ...companies.map((comp) => ({
-      value: comp.id.toString(),
-      label: `${comp.name} (${comp.rutCompany})`,
-    })),
+    ...companies.map((c) => ({ value: c.id.toString(), label: `${c.name} (${c.rutCompany})` })),
+  ];
+
+  const afpOptions: SelectOption[] = [
+    { value: '', label: '-- Seleccionar AFP --' },
+    ...afps.map((a) => ({ value: a.id.toString(), label: `${a.name} (${a.commissionRate}%)` })),
+  ];
+
+  const healthOptions: SelectOption[] = [
+    { value: '', label: '-- Seleccionar Salud --' },
+    ...healthInstitutions.map((h) => ({ value: h.id.toString(), label: `${h.name} ${h.isIsapre ? '(Isapre)' : '(Fonasa)'}` })),
+  ];
+
+  const contractOptions: SelectOption[] = [
+    { value: '', label: '-- Seleccionar Tipo Contrato --' },
+    ...contractTypes.map((ct) => ({ value: ct.id.toString(), label: ct.name })),
+  ];
+
+  const bankOptions: SelectOption[] = [
+    { value: '', label: '-- Seleccionar Banco --' },
+    ...banks.map((b) => ({ value: b.id.toString(), label: b.name })),
   ];
 
   const createMutation = useMutation({
@@ -65,8 +122,19 @@ export const WorkerModal: React.FC<WorkerModalProps> = ({ isOpen, onClose }) => 
 
   const handleClose = () => {
     setName('');
+    setPaternalLastName('');
+    setMaternalLastName('');
     setRut('');
+    setEntryDate('');
+    setBaseSalary('');
     setCompanyId('');
+    setAfpId('');
+    setHealthInstitutionId('');
+    setHealthAgreedUf('');
+    setContractTypeId('');
+    setBankId('');
+    setBankAccountType('');
+    setBankAccountNumber('');
     setRutError('');
     setApiError(null);
     onClose();
@@ -95,12 +163,21 @@ export const WorkerModal: React.FC<WorkerModalProps> = ({ isOpen, onClose }) => 
 
     createMutation.mutate({
       name: validationResult.data.name,
+      paternalLastName: paternalLastName.trim() || undefined,
+      maternalLastName: maternalLastName.trim() || undefined,
       rut: validationResult.data.rut,
+      entryDate: entryDate || undefined,
+      baseSalary: baseSalary ? parseFloat(baseSalary) : undefined,
       companyId: companyId ? parseInt(companyId, 10) : null,
+      afpId: afpId ? parseInt(afpId, 10) : null,
+      healthInstitutionId: healthInstitutionId ? parseInt(healthInstitutionId, 10) : null,
+      healthAgreedUf: healthAgreedUf ? parseFloat(healthAgreedUf) : 0,
+      contractTypeId: contractTypeId ? parseInt(contractTypeId, 10) : null,
+      bankId: bankId ? parseInt(bankId, 10) : null,
+      bankAccountType: bankAccountType || undefined,
+      bankAccountNumber: bankAccountNumber || undefined,
     });
   };
-
-  const selectedOption = companyOptions.find((opt) => opt.value === companyId) || companyOptions[0];
 
   return (
     <Dialog open={isOpen} onClose={handleClose} className="relative z-50">
@@ -109,14 +186,14 @@ export const WorkerModal: React.FC<WorkerModalProps> = ({ isOpen, onClose }) => 
 
       {/* Modal Container */}
       <div className="fixed inset-0 flex w-screen items-center justify-center p-4">
-        <DialogPanel className="w-full max-w-md overflow-hidden rounded-3xl border border-white/80 bg-white/90 p-6 shadow-2xl backdrop-blur-2xl transition-all">
+        <DialogPanel className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl border border-white/80 bg-white/95 p-6 shadow-2xl backdrop-blur-2xl transition-all selection:bg-neutral-200">
           <div className="flex items-center justify-between pb-4 border-b border-neutral-200/60">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#37352F] text-white shadow-xs">
                 <UserGroupIcon className="h-5 w-5" />
               </div>
               <DialogTitle className="text-lg font-bold text-[#37352F]">
-                Agregar Nueva Persona
+                Agregar Nueva Persona / Trabajador
               </DialogTitle>
             </div>
             <button
@@ -131,57 +208,210 @@ export const WorkerModal: React.FC<WorkerModalProps> = ({ isOpen, onClose }) => 
           <form onSubmit={handleSubmit} className="mt-5 space-y-4">
             {apiError && <AlertBanner type="error" message={apiError} />}
 
-            {/* Field: Name */}
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-[#787774] mb-1.5">
-                Nombre Completo
-              </label>
-              <input
-                type="text"
-                placeholder="Ej: Juan Antonio Pérez"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full rounded-xl border border-neutral-200 bg-white px-3.5 py-2.5 text-sm text-[#37352F] placeholder-[#787774]/60 shadow-2xs focus:border-[#37352F] focus:outline-none focus:ring-1 focus:ring-[#37352F]"
-                required
-              />
+            {/* Section 1: Datos Personales */}
+            <div className="space-y-3 pt-2">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-[#37352F] border-b border-neutral-200/60 pb-1">
+                1. Datos Personales e Identificación
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-[11px] font-semibold text-[#787774] mb-1">
+                    Nombres *
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ej: Juan Antonio"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs text-[#37352F] placeholder-[#787774]/60 shadow-2xs focus:border-[#37352F] focus:outline-none focus:ring-1 focus:ring-[#37352F]"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-[#787774] mb-1">
+                    Apellido Paterno
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ej: Pérez"
+                    value={paternalLastName}
+                    onChange={(e) => setPaternalLastName(e.target.value)}
+                    className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs text-[#37352F] placeholder-[#787774]/60 shadow-2xs focus:border-[#37352F] focus:outline-none focus:ring-1 focus:ring-[#37352F]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-[#787774] mb-1">
+                    Apellido Materno
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ej: González"
+                    value={maternalLastName}
+                    onChange={(e) => setMaternalLastName(e.target.value)}
+                    className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs text-[#37352F] placeholder-[#787774]/60 shadow-2xs focus:border-[#37352F] focus:outline-none focus:ring-1 focus:ring-[#37352F]"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-semibold text-[#787774] mb-1">
+                    RUT del Trabajador *
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ej: 19.876.543-2"
+                    value={rut}
+                    onChange={handleRutChange}
+                    maxLength={12}
+                    className={`w-full rounded-xl border px-3 py-2 text-xs text-[#37352F] placeholder-[#787774]/60 shadow-2xs focus:outline-none focus:ring-1 ${
+                      rutError
+                        ? 'border-rose-400 focus:border-rose-500 focus:ring-rose-500'
+                        : 'border-neutral-200 focus:border-[#37352F] focus:ring-[#37352F]'
+                    }`}
+                    required
+                  />
+                  {rutError && <p className="mt-1 text-xs text-rose-600 font-medium">{rutError}</p>}
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-[#787774] mb-1">
+                    Empresa Asignada
+                  </label>
+                  <CustomSelect<SelectOption>
+                    options={companyOptions}
+                    value={companyOptions.find((o) => o.value === companyId) || companyOptions[0]}
+                    onChange={(opt) => setCompanyId(opt?.value || '')}
+                  />
+                </div>
+              </div>
             </div>
 
-            {/* Field: RUT */}
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-[#787774] mb-1.5">
-                RUT de la Persona
-              </label>
-              <input
-                type="text"
-                placeholder="Ej: 19.876.543-2"
-                value={rut}
-                onChange={handleRutChange}
-                maxLength={12}
-                className={`w-full rounded-xl border px-3.5 py-2.5 text-sm text-[#37352F] placeholder-[#787774]/60 shadow-2xs focus:outline-none focus:ring-1 ${
-                  rutError
-                    ? 'border-rose-400 focus:border-rose-500 focus:ring-rose-500'
-                    : 'border-neutral-200 focus:border-[#37352F] focus:ring-[#37352F]'
-                }`}
-                required
-              />
-              {rutError && <p className="mt-1 text-xs text-rose-600 font-medium">{rutError}</p>}
+            {/* Section 2: Datos Contratantes y Previsionales */}
+            <div className="space-y-3 pt-3">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-[#37352F] border-b border-neutral-200/60 pb-1">
+                2. Contrato, Previsión y Sueldo
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-[11px] font-semibold text-[#787774] mb-1">
+                    Fecha de Ingreso
+                  </label>
+                  <input
+                    type="date"
+                    value={entryDate}
+                    onChange={(e) => setEntryDate(e.target.value)}
+                    className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs text-[#37352F] shadow-2xs focus:border-[#37352F] focus:outline-none focus:ring-1 focus:ring-[#37352F]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-[#787774] mb-1">
+                    Sueldo Base Pactado ($)
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="Ej: 600000"
+                    value={baseSalary}
+                    onChange={(e) => setBaseSalary(e.target.value)}
+                    className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs text-[#37352F] shadow-2xs focus:border-[#37352F] focus:outline-none focus:ring-1 focus:ring-[#37352F]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-[#787774] mb-1">
+                    Tipo de Contrato
+                  </label>
+                  <CustomSelect<SelectOption>
+                    options={contractOptions}
+                    value={contractOptions.find((o) => o.value === contractTypeId) || contractOptions[0]}
+                    onChange={(opt) => setContractTypeId(opt?.value || '')}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-[11px] font-semibold text-[#787774] mb-1">
+                    AFP Affiliada
+                  </label>
+                  <CustomSelect<SelectOption>
+                    options={afpOptions}
+                    value={afpOptions.find((o) => o.value === afpId) || afpOptions[0]}
+                    onChange={(opt) => setAfpId(opt?.value || '')}
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-[#787774] mb-1">
+                    Institución de Salud
+                  </label>
+                  <CustomSelect<SelectOption>
+                    options={healthOptions}
+                    value={healthOptions.find((o) => o.value === healthInstitutionId) || healthOptions[0]}
+                    onChange={(opt) => setHealthInstitutionId(opt?.value || '')}
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-[#787774] mb-1">
+                    Monto Pactado Isapre (UF)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.001"
+                    placeholder="Ej: 3.5"
+                    value={healthAgreedUf}
+                    onChange={(e) => setHealthAgreedUf(e.target.value)}
+                    className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs text-[#37352F] shadow-2xs focus:border-[#37352F] focus:outline-none focus:ring-1 focus:ring-[#37352F]"
+                  />
+                </div>
+              </div>
             </div>
 
-            {/* Field: Company Select (React Select) */}
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-[#787774] mb-1.5">
-                Empresa Asignada
-              </label>
-              <CustomSelect<CompanyOption>
-                options={companyOptions}
-                value={selectedOption}
-                onChange={(option) => setCompanyId(option?.value || '')}
-                placeholder="Seleccionar empresa..."
-              />
+            {/* Section 3: Datos de Pago Bancario */}
+            <div className="space-y-3 pt-3">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-[#37352F] border-b border-neutral-200/60 pb-1">
+                3. Datos de Pago Bancario (Opcional)
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-[11px] font-semibold text-[#787774] mb-1">
+                    Banco Destino
+                  </label>
+                  <CustomSelect<SelectOption>
+                    options={bankOptions}
+                    value={bankOptions.find((o) => o.value === bankId) || bankOptions[0]}
+                    onChange={(opt) => setBankId(opt?.value || '')}
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-[#787774] mb-1">
+                    Tipo de Cuenta
+                  </label>
+                  <select
+                    value={bankAccountType}
+                    onChange={(e) => setBankAccountType(e.target.value)}
+                    className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs text-[#37352F] shadow-2xs focus:border-[#37352F] focus:outline-none focus:ring-1 focus:ring-[#37352F]"
+                  >
+                    <option value="">-- Seleccionar --</option>
+                    <option value="Cuenta Vista / RUT">Cuenta Vista / RUT</option>
+                    <option value="Cuenta Corriente">Cuenta Corriente</option>
+                    <option value="Cuenta de Ahorro">Cuenta de Ahorro</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-[#787774] mb-1">
+                    Número de Cuenta
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ej: 19876543"
+                    value={bankAccountNumber}
+                    onChange={(e) => setBankAccountNumber(e.target.value)}
+                    className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs text-[#37352F] shadow-2xs focus:border-[#37352F] focus:outline-none focus:ring-1 focus:ring-[#37352F]"
+                  />
+                </div>
+              </div>
             </div>
 
             {/* Form Actions */}
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-neutral-200/60 mt-6">
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-neutral-200/60 mt-6">
               <button
                 type="button"
                 onClick={handleClose}
@@ -192,7 +422,7 @@ export const WorkerModal: React.FC<WorkerModalProps> = ({ isOpen, onClose }) => 
               <button
                 type="submit"
                 disabled={createMutation.isPending}
-                className="rounded-xl bg-[#37352F] px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-[#201F1C] disabled:opacity-50"
+                className="rounded-xl bg-[#37352F] px-5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-[#201F1C] disabled:opacity-50"
               >
                 {createMutation.isPending ? 'Guardando...' : 'Guardar Persona'}
               </button>

@@ -32,6 +32,8 @@ export class CompaniesService {
       data: {
         name: createCompanyDto.name.trim(),
         rutCompany: formattedRut,
+        address: createCompanyDto.address ? createCompanyDto.address.trim() : null,
+        digitalCertificateId: createCompanyDto.digitalCertificateId ? BigInt(createCompanyDto.digitalCertificateId) : null,
         userId,
       },
     });
@@ -69,6 +71,14 @@ export class CompaniesService {
 
     if (updateCompanyDto.name !== undefined) {
       dataToUpdate.name = updateCompanyDto.name.trim();
+    }
+
+    if (updateCompanyDto.address !== undefined) {
+      dataToUpdate.address = updateCompanyDto.address ? updateCompanyDto.address.trim() : null;
+    }
+
+    if (updateCompanyDto.digitalCertificateId !== undefined) {
+      dataToUpdate.digitalCertificateId = updateCompanyDto.digitalCertificateId ? BigInt(updateCompanyDto.digitalCertificateId) : null;
     }
 
     if (updateCompanyDto.rutCompany !== undefined) {

@@ -4,21 +4,27 @@ export interface Company {
   id: number;
   name: string;
   rutCompany: string;
-  createdAt: string;
-  updatedAt: string;
+  address?: string | null;
+  digitalCertificateId?: number | null;
   _count?: {
     workers: number;
   };
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface CreateCompanyPayload {
   name: string;
   rutCompany: string;
+  address?: string;
+  digitalCertificateId?: number;
 }
 
 export interface UpdateCompanyPayload {
   name?: string;
   rutCompany?: string;
+  address?: string;
+  digitalCertificateId?: number;
 }
 
 export const companiesService = {

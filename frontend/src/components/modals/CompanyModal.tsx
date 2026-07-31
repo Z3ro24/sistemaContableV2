@@ -15,6 +15,7 @@ interface CompanyModalProps {
 export const CompanyModal: React.FC<CompanyModalProps> = ({ isOpen, onClose }) => {
   const [name, setName] = useState('');
   const [rutCompany, setRutCompany] = useState('');
+  const [address, setAddress] = useState('');
   const [rutError, setRutError] = useState('');
   const [apiError, setApiError] = useState<string | null>(null);
 
@@ -43,6 +44,7 @@ export const CompanyModal: React.FC<CompanyModalProps> = ({ isOpen, onClose }) =
   const handleClose = () => {
     setName('');
     setRutCompany('');
+    setAddress('');
     setRutError('');
     setApiError(null);
     onClose();
@@ -71,6 +73,7 @@ export const CompanyModal: React.FC<CompanyModalProps> = ({ isOpen, onClose }) =
     createMutation.mutate({
       name: validationResult.data.name,
       rutCompany: validationResult.data.rutCompany,
+      address: address.trim() || undefined,
     });
   };
 
@@ -106,7 +109,7 @@ export const CompanyModal: React.FC<CompanyModalProps> = ({ isOpen, onClose }) =
             {/* Field: Name */}
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-[#787774] mb-1.5">
-                Nombre de la Empresa
+                Razón Social / Nombre
               </label>
               <input
                 type="text"
@@ -121,7 +124,7 @@ export const CompanyModal: React.FC<CompanyModalProps> = ({ isOpen, onClose }) =
             {/* Field: RUT */}
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-[#787774] mb-1.5">
-                RUT de la Empresa
+                RUT Empresa
               </label>
               <input
                 type="text"
@@ -137,6 +140,20 @@ export const CompanyModal: React.FC<CompanyModalProps> = ({ isOpen, onClose }) =
                 required
               />
               {rutError && <p className="mt-1 text-xs text-rose-600 font-medium">{rutError}</p>}
+            </div>
+
+            {/* Field: Address */}
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-[#787774] mb-1.5">
+                Dirección Comercial (Opcional)
+              </label>
+              <input
+                type="text"
+                placeholder="Ej: Av. Providencia 1234, Oficina 501"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                className="w-full rounded-xl border border-neutral-200 bg-white px-3.5 py-2.5 text-sm text-[#37352F] placeholder-[#787774]/60 shadow-2xs focus:border-[#37352F] focus:outline-none focus:ring-1 focus:ring-[#37352F]"
+              />
             </div>
 
             {/* Form Actions */}

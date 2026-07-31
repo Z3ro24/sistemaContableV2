@@ -4,12 +4,13 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeftIcon, UserGroupIcon } from '@heroicons/react/24/outline';
 import workersService from '../../services/workersService';
 import companiesService from '../../services/companiesService';
+import catalogsService from '../../services/catalogsService';
 import { formatRut, validateRut } from '../../utils/rutUtils';
 import { workerSchema } from '../../validators/workerValidator';
 import AlertBanner from '../../components/common/AlertBanner';
 import CustomSelect from '../../components/common/CustomSelect';
 
-interface CompanyOption {
+interface SelectOption {
   value: string;
   label: string;
 }
@@ -22,8 +23,21 @@ export const EditWorkerPage: React.FC = () => {
   const workerId = id ? parseInt(id, 10) : 0;
 
   const [name, setName] = useState('');
+  const [paternalLastName, setPaternalLastName] = useState('');
+  const [maternalLastName, setMaternalLastName] = useState('');
   const [rut, setRut] = useState('');
-  const [companyId, setCompanyId] = useState<string>('');
+  const [entryDate, setEntryDate] = useState('');
+  const [baseSalary, setBaseSalary] = useState('');
+
+  const [companyId, setCompanyId] = useState('');
+  const [afpId, setAfpId] = useState('');
+  const [healthInstitutionId, setHealthInstitutionId] = useState('');
+  const [healthAgreedUf, setHealthAgreedUf] = useState('');
+  const [contractTypeId, setContractTypeId] = useState('');
+  const [bankId, setBankId] = useState('');
+  const [bankAccountType, setBankAccountType] = useState('');
+  const [bankAccountNumber, setBankAccountNumber] = useState('');
+
   const [rutError, setRutError] = useState('');
   const [apiError, setApiError] = useState<string | null>(null);
 
@@ -34,31 +48,80 @@ export const EditWorkerPage: React.FC = () => {
     enabled: !!workerId,
   });
 
-  // Fetch user companies
+  // Fetch companies
   const { data: companies = [] } = useQuery({
     queryKey: ['companies'],
     queryFn: companiesService.getAll,
   });
 
-  const companyOptions: CompanyOption[] = [
+  // Fetch Catalogs
+  const { data: afps = [] } = useQuery({
+    queryKey: ['afps'],
+    queryFn: catalogsService.getAfps,
+  });
+
+  const { data: healthInstitutions = [] } = useQuery({
+    queryKey: ['healthInstitutions'],
+    queryFn: catalogsService.getHealthInstitutions,
+  });
+
+  const { data: contractTypes = [] } = useQuery({
+    queryKey: ['contractTypes'],
+    queryFn: catalogsService.getContractTypes,
+  });
+
+  const { data: banks = [] } = useQuery({
+    queryKey: ['banks'],
+    queryFn: catalogsService.getBanks,
+  });
+
+  // Select options
+  const companyOptions: SelectOption[] = [
     { value: '', label: '-- Sin Empresa Asignada --' },
-    ...companies.map((comp) => ({
-      value: comp.id.toString(),
-      label: `${comp.name} (${comp.rutCompany})`,
-    })),
+    ...companies.map((c) => ({ value: c.id.toString(), label: `${c.name} (${c.rutCompany})` })),
+  ];
+
+  const afpOptions: SelectOption[] = [
+    { value: '', label: '-- Seleccionar AFP --' },
+    ...afps.map((a) => ({ value: a.id.toString(), label: `${a.name} (${a.commissionRate}%)` })),
+  ];
+
+  const healthOptions: SelectOption[] = [
+    { value: '', label: '-- Seleccionar Salud --' },
+    ...healthInstitutions.map((h) => ({ value: h.id.toString(), label: `${h.name} ${h.isIsapre ? '(Isapre)' : '(Fonasa)'}` })),
+  ];
+
+  const contractOptions: SelectOption[] = [
+    { value: '', label: '-- Seleccionar Tipo Contrato --' },
+    ...contractTypes.map((ct) => ({ value: ct.id.toString(), label: ct.name })),
+  ];
+
+  const bankOptions: SelectOption[] = [
+    { value: '', label: '-- Seleccionar Banco --' },
+    ...banks.map((b) => ({ value: b.id.toString(), label: b.name })),
   ];
 
   useEffect(() => {
     if (worker) {
       setName(worker.name);
+      setPaternalLastName(worker.paternalLastName || '');
+      setMaternalLastName(worker.maternalLastName || '');
       setRut(formatRut(worker.rut));
+      setEntryDate(worker.entryDate ? worker.entryDate.split('T')[0] : '');
+      setBaseSalary(worker.baseSalary ? worker.baseSalary.toString() : '');
       setCompanyId(worker.companyId ? worker.companyId.toString() : '');
+      setAfpId(worker.afpId ? worker.afpId.toString() : '');
+      setHealthInstitutionId(worker.healthInstitutionId ? worker.healthInstitutionId.toString() : '');
+      setHealthAgreedUf(worker.healthAgreedUf ? worker.healthAgreedUf.toString() : '');
+      setContractTypeId(worker.contractTypeId ? worker.contractTypeId.toString() : '');
+      setBankId(worker.bankId ? worker.bankId.toString() : '');
+      setBankAccountType(worker.bankAccountType || '');
+      setBankAccountNumber(worker.bankAccountNumber || '');
     }
   }, [worker]);
 
   const updateMutation = useMutation({
-    mutationFn: (payload: { name: string; rut: string; companyId?: number | null }) =>
-      workersService.update(workerId, payload),
+    mutationFn: (payload: any) => workersService.update(workerId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['workers'] });
       queryClient.invalidateQueries({ queryKey: ['worker', workerId] });
@@ -101,8 +164,19 @@ export const EditWorkerPage: React.FC = () => {
 
     updateMutation.mutate({
       name: validationResult.data.name,
+      paternalLastName: paternalLastName.trim() || undefined,
+      maternalLastName: maternalLastName.trim() || undefined,
       rut: validationResult.data.rut,
+      entryDate: entryDate || undefined,
+      baseSalary: baseSalary ? parseFloat(baseSalary) : 0,
       companyId: companyId ? parseInt(companyId, 10) : null,
+      afpId: afpId ? parseInt(afpId, 10) : null,
+      healthInstitutionId: healthInstitutionId ? parseInt(healthInstitutionId, 10) : null,
+      healthAgreedUf: healthAgreedUf ? parseFloat(healthAgreedUf) : 0,
+      contractTypeId: contractTypeId ? parseInt(contractTypeId, 10) : null,
+      bankId: bankId ? parseInt(bankId, 10) : null,
+      bankAccountType: bankAccountType || undefined,
+      bankAccountNumber: bankAccountNumber || undefined,
     });
   };
 
@@ -130,10 +204,8 @@ export const EditWorkerPage: React.FC = () => {
     );
   }
 
-  const selectedOption = companyOptions.find((opt) => opt.value === companyId) || companyOptions[0];
-
   return (
-    <div className="space-y-6 max-w-3xl selection:bg-neutral-200">
+    <div className="space-y-6 max-w-4xl selection:bg-neutral-200">
       {/* Top Action Bar */}
       <button
         type="button"
@@ -155,59 +227,179 @@ export const EditWorkerPage: React.FC = () => {
               Editar Persona: {worker.name}
             </h1>
             <p className="text-xs text-[#787774]">
-              Modifica los detalles, RUT o empresa asignada.
+              Modifica los detalles laborales, RUT, previsión o banco asignado.
             </p>
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-5">
           {apiError && <AlertBanner type="error" message={apiError} />}
 
-          {/* Field: Name */}
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-[#787774] mb-1.5">
-              Nombre Completo
-            </label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full rounded-xl border border-neutral-200 bg-white px-3.5 py-2.5 text-sm text-[#37352F] shadow-2xs focus:border-[#37352F] focus:outline-none focus:ring-1 focus:ring-[#37352F]"
-              required
-            />
+          {/* Section 1: Personal Data */}
+          <div className="space-y-3 pt-2">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-[#37352F] border-b border-neutral-200/60 pb-1">
+              1. Datos Personales e Identificación
+            </h4>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label className="block text-[11px] font-semibold text-[#787774] mb-1">Nombres *</label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs text-[#37352F] shadow-2xs focus:border-[#37352F] focus:outline-none focus:ring-1 focus:ring-[#37352F]"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-[#787774] mb-1">Apellido Paterno</label>
+                <input
+                  type="text"
+                  value={paternalLastName}
+                  onChange={(e) => setPaternalLastName(e.target.value)}
+                  className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs text-[#37352F] shadow-2xs focus:border-[#37352F] focus:outline-none focus:ring-1 focus:ring-[#37352F]"
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-[#787774] mb-1">Apellido Materno</label>
+                <input
+                  type="text"
+                  value={maternalLastName}
+                  onChange={(e) => setMaternalLastName(e.target.value)}
+                  className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs text-[#37352F] shadow-2xs focus:border-[#37352F] focus:outline-none focus:ring-1 focus:ring-[#37352F]"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-[11px] font-semibold text-[#787774] mb-1">RUT *</label>
+                <input
+                  type="text"
+                  value={rut}
+                  onChange={handleRutChange}
+                  maxLength={12}
+                  className={`w-full rounded-xl border px-3 py-2 text-xs text-[#37352F] shadow-2xs focus:outline-none focus:ring-1 ${
+                    rutError
+                      ? 'border-rose-400 focus:border-rose-500 focus:ring-rose-500'
+                      : 'border-neutral-200 focus:border-[#37352F] focus:ring-[#37352F]'
+                  }`}
+                  required
+                />
+                {rutError && <p className="mt-1 text-xs text-rose-600 font-medium">{rutError}</p>}
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-[#787774] mb-1">Empresa Asignada</label>
+                <CustomSelect<SelectOption>
+                  options={companyOptions}
+                  value={companyOptions.find((o) => o.value === companyId) || companyOptions[0]}
+                  onChange={(opt) => setCompanyId(opt?.value || '')}
+                />
+              </div>
+            </div>
           </div>
 
-          {/* Field: RUT */}
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-[#787774] mb-1.5">
-              RUT de la Persona
-            </label>
-            <input
-              type="text"
-              value={rut}
-              onChange={handleRutChange}
-              maxLength={12}
-              className={`w-full rounded-xl border px-3.5 py-2.5 text-sm text-[#37352F] shadow-2xs focus:outline-none focus:ring-1 ${
-                rutError
-                  ? 'border-rose-400 focus:border-rose-500 focus:ring-rose-500'
-                  : 'border-neutral-200 focus:border-[#37352F] focus:ring-[#37352F]'
-              }`}
-              required
-            />
-            {rutError && <p className="mt-1 text-xs text-rose-600 font-medium">{rutError}</p>}
+          {/* Section 2: Labor & Health Data */}
+          <div className="space-y-3 pt-2">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-[#37352F] border-b border-neutral-200/60 pb-1">
+              2. Contrato, Previsión y Sueldo
+            </h4>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label className="block text-[11px] font-semibold text-[#787774] mb-1">Fecha de Ingreso</label>
+                <input
+                  type="date"
+                  value={entryDate}
+                  onChange={(e) => setEntryDate(e.target.value)}
+                  className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs text-[#37352F] shadow-2xs focus:border-[#37352F] focus:outline-none focus:ring-1 focus:ring-[#37352F]"
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-[#787774] mb-1">Sueldo Base Pactado ($)</label>
+                <input
+                  type="number"
+                  value={baseSalary}
+                  onChange={(e) => setBaseSalary(e.target.value)}
+                  className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs text-[#37352F] shadow-2xs focus:border-[#37352F] focus:outline-none focus:ring-1 focus:ring-[#37352F]"
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-[#787774] mb-1">Tipo de Contrato</label>
+                <CustomSelect<SelectOption>
+                  options={contractOptions}
+                  value={contractOptions.find((o) => o.value === contractTypeId) || contractOptions[0]}
+                  onChange={(opt) => setContractTypeId(opt?.value || '')}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label className="block text-[11px] font-semibold text-[#787774] mb-1">AFP Afiliada</label>
+                <CustomSelect<SelectOption>
+                  options={afpOptions}
+                  value={afpOptions.find((o) => o.value === afpId) || afpOptions[0]}
+                  onChange={(opt) => setAfpId(opt?.value || '')}
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-[#787774] mb-1">Institución de Salud</label>
+                <CustomSelect<SelectOption>
+                  options={healthOptions}
+                  value={healthOptions.find((o) => o.value === healthInstitutionId) || healthOptions[0]}
+                  onChange={(opt) => setHealthInstitutionId(opt?.value || '')}
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-[#787774] mb-1">Monto Pactado Isapre (UF)</label>
+                <input
+                  type="number"
+                  step="0.001"
+                  value={healthAgreedUf}
+                  onChange={(e) => setHealthAgreedUf(e.target.value)}
+                  className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs text-[#37352F] shadow-2xs focus:border-[#37352F] focus:outline-none focus:ring-1 focus:ring-[#37352F]"
+                />
+              </div>
+            </div>
           </div>
 
-          {/* Field: Company Select (React Select) */}
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-[#787774] mb-1.5">
-              Empresa Asignada
-            </label>
-            <CustomSelect<CompanyOption>
-              options={companyOptions}
-              value={selectedOption}
-              onChange={(option) => setCompanyId(option?.value || '')}
-              placeholder="Seleccionar empresa..."
-            />
+          {/* Section 3: Banking Data */}
+          <div className="space-y-3 pt-2">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-[#37352F] border-b border-neutral-200/60 pb-1">
+              3. Datos de Pago Bancario
+            </h4>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label className="block text-[11px] font-semibold text-[#787774] mb-1">Banco Destino</label>
+                <CustomSelect<SelectOption>
+                  options={bankOptions}
+                  value={bankOptions.find((o) => o.value === bankId) || bankOptions[0]}
+                  onChange={(opt) => setBankId(opt?.value || '')}
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-[#787774] mb-1">Tipo de Cuenta</label>
+                <select
+                  value={bankAccountType}
+                  onChange={(e) => setBankAccountType(e.target.value)}
+                  className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs text-[#37352F] shadow-2xs focus:border-[#37352F] focus:outline-none focus:ring-1 focus:ring-[#37352F]"
+                >
+                  <option value="">-- Seleccionar --</option>
+                  <option value="Cuenta Vista / RUT">Cuenta Vista / RUT</option>
+                  <option value="Cuenta Corriente">Cuenta Corriente</option>
+                  <option value="Cuenta de Ahorro">Cuenta de Ahorro</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-[#787774] mb-1">Número de Cuenta</label>
+                <input
+                  type="text"
+                  value={bankAccountNumber}
+                  onChange={(e) => setBankAccountNumber(e.target.value)}
+                  className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs text-[#37352F] shadow-2xs focus:border-[#37352F] focus:outline-none focus:ring-1 focus:ring-[#37352F]"
+                />
+              </div>
+            </div>
           </div>
 
           {/* Form Actions */}

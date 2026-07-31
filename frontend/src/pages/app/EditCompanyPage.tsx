@@ -16,6 +16,7 @@ export const EditCompanyPage: React.FC = () => {
 
   const [name, setName] = useState('');
   const [rutCompany, setRutCompany] = useState('');
+  const [address, setAddress] = useState('');
   const [rutError, setRutError] = useState('');
   const [apiError, setApiError] = useState<string | null>(null);
 
@@ -30,11 +31,12 @@ export const EditCompanyPage: React.FC = () => {
     if (company) {
       setName(company.name);
       setRutCompany(formatRut(company.rutCompany));
+      setAddress(company.address || '');
     }
   }, [company]);
 
   const updateMutation = useMutation({
-    mutationFn: (payload: { name: string; rutCompany: string }) =>
+    mutationFn: (payload: { name: string; rutCompany: string; address?: string }) =>
       companiesService.update(companyId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['companies'] });
@@ -78,6 +80,7 @@ export const EditCompanyPage: React.FC = () => {
     updateMutation.mutate({
       name: validationResult.data.name,
       rutCompany: validationResult.data.rutCompany,
+      address: address.trim() || undefined,
     });
   };
 
@@ -128,7 +131,7 @@ export const EditCompanyPage: React.FC = () => {
               Editar Empresa: {company.name}
             </h1>
             <p className="text-xs text-[#787774]">
-              Modifica la razón social o RUT corporativo.
+              Modifica la razón social, RUT corporativo o dirección comercial.
             </p>
           </div>
         </div>
@@ -139,7 +142,7 @@ export const EditCompanyPage: React.FC = () => {
           {/* Field: Name */}
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-[#787774] mb-1.5">
-              Nombre de la Empresa
+              Razón Social / Nombre
             </label>
             <input
               type="text"
@@ -153,7 +156,7 @@ export const EditCompanyPage: React.FC = () => {
           {/* Field: RUT */}
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-[#787774] mb-1.5">
-              RUT de la Empresa
+              RUT Empresa
             </label>
             <input
               type="text"
@@ -168,6 +171,19 @@ export const EditCompanyPage: React.FC = () => {
               required
             />
             {rutError && <p className="mt-1 text-xs text-rose-600 font-medium">{rutError}</p>}
+          </div>
+
+          {/* Field: Address */}
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-[#787774] mb-1.5">
+              Dirección Comercial (Opcional)
+            </label>
+            <input
+              type="text"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              className="w-full rounded-xl border border-neutral-200 bg-white px-3.5 py-2.5 text-sm text-[#37352F] shadow-2xs focus:border-[#37352F] focus:outline-none focus:ring-1 focus:ring-[#37352F]"
+            />
           </div>
 
           {/* Form Actions */}
