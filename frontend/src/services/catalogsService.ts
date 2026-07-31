@@ -5,6 +5,18 @@ export interface LiveUf {
   fecha: string;
 }
 
+export interface LiveIndicatorValue {
+  valor: number;
+  fecha: string;
+}
+
+export interface LiveIndicators {
+  uf: LiveIndicatorValue;
+  utm: LiveIndicatorValue;
+  dolar?: LiveIndicatorValue;
+  ipc?: LiveIndicatorValue;
+}
+
 export interface Afp {
   id: number;
   name: string;
@@ -46,6 +58,11 @@ export interface JobPosition {
 export const catalogsService = {
   getLiveUf: async (): Promise<LiveUf> => {
     const response = await api.get<LiveUf>('/catalogs/uf-live');
+    return response.data;
+  },
+
+  getLiveIndicators: async (): Promise<LiveIndicators> => {
+    const response = await api.get<LiveIndicators>('/catalogs/indicators-live');
     return response.data;
   },
 

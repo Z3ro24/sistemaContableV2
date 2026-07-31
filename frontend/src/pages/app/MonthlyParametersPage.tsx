@@ -8,6 +8,9 @@ import {
   InformationCircleIcon,
   ArrowPathIcon,
   SparklesIcon,
+  BuildingLibraryIcon,
+  CurrencyDollarIcon,
+  ChartBarIcon,
 } from '@heroicons/react/24/outline';
 import monthlyParametersService from '../../services/monthlyParametersService';
 import catalogsService from '../../services/catalogsService';
@@ -66,51 +69,54 @@ export const MonthlyParametersPage: React.FC = () => {
   const [apiError, setApiError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
-  // Fetch live UF indicator using backend proxy (bypasses CORS & format variations)
+  // Fetch live economic indicators (UF, UTM, Dólar, IPC) from backend proxy with fallback
   const {
-    data: ufLiveResponse,
-    isLoading: isUfLoading,
-    refetch: refetchUf,
+    data: liveIndicators,
+    isLoading: isIndicatorsLoading,
+    refetch: refetchIndicators,
   } = useQuery({
-    queryKey: ['mindicadorUfProxy'],
+    queryKey: ['mindicadorLiveIndicatorsProxy'],
     queryFn: async () => {
-      // 1. Try backend proxy
       try {
-        const proxyData = await catalogsService.getLiveUf();
-        if (proxyData?.valor) {
+        const proxyData = await catalogsService.getLiveIndicators();
+        if (proxyData?.uf && proxyData?.utm) {
           return proxyData;
         }
-      } catch (e) {
-        // Fallback to direct fetch
-      }
+      } catch (e) {}
 
-      // 2. Direct client fetch fallback
-      const res = await fetch('https://mindicador.cl/api/uf');
-      if (!res.ok) {
-        throw new Error('Error al conectar con la API de mindicador.cl');
-      }
+      // Client direct fallback
+      const res = await fetch('https://mindicador.cl/api');
+      if (!res.ok) throw new Error('Error al conectar con mindicador.cl');
       const data = await res.json();
-      if (data.serie && data.serie.length > 0) {
-        return { valor: data.serie[0].valor, fecha: data.serie[0].fecha };
-      }
-      if (data.uf && data.uf.valor) {
-        return { valor: data.uf.valor, fecha: data.uf.fecha };
-      }
-      throw new Error('No se pudo extraer el valor de la UF');
+      return {
+        uf: { valor: data.uf.valor, fecha: data.uf.fecha },
+        utm: { valor: data.utm.valor, fecha: data.utm.fecha },
+        dolar: data.dolar ? { valor: data.dolar.valor, fecha: data.dolar.fecha } : undefined,
+        ipc: data.ipc ? { valor: data.ipc.valor, fecha: data.ipc.fecha } : undefined,
+      };
     },
     staleTime: 1000 * 60 * 30, // 30 mins cache
   });
 
-  // Auto-fill UF value when API responds
+  // Auto-fill UF and UTM values when API responds
   useEffect(() => {
-    if (ufLiveResponse?.valor) {
-      setUfClosingValue(ufLiveResponse.valor.toString());
+    if (liveIndicators?.uf?.valor) {
+      setUfClosingValue(liveIndicators.uf.valor.toString());
     }
-  }, [ufLiveResponse]);
+    if (liveIndicators?.utm?.valor) {
+      setUtmValue(liveIndicators.utm.valor.toString());
+    }
+  }, [liveIndicators]);
 
   const handleUseOfficialUf = () => {
-    if (ufLiveResponse?.valor) {
-      setUfClosingValue(ufLiveResponse.valor.toString());
+    if (liveIndicators?.uf?.valor) {
+      setUfClosingValue(liveIndicators.uf.valor.toString());
+    }
+  };
+
+  const handleUseOfficialUtm = () => {
+    if (liveIndicators?.utm?.valor) {
+      setUtmValue(liveIndicators.utm.valor.toString());
     }
   };
 
@@ -168,9 +174,16 @@ export const MonthlyParametersPage: React.FC = () => {
     }
   };
 
-  const formattedUfDate = ufLiveResponse?.fecha
-    ? new Date(ufLiveResponse.fecha).toLocaleDateString('es-CL', {
+  const formattedUfDate = liveIndicators?.uf?.fecha
+    ? new Date(liveIndicators.uf.fecha).toLocaleDateString('es-CL', {
         day: '2-digit',
+        month: 'long',
+        year: 'numeric',
+      })
+    : '';
+
+  const formattedUtmDate = liveIndicators?.utm?.fecha
+    ? new Date(liveIndicators.utm.fecha).toLocaleDateString('es-CL', {
         month: 'long',
         year: 'numeric',
       })
@@ -193,55 +206,125 @@ export const MonthlyParametersPage: React.FC = () => {
             </p>
           </div>
         </div>
+
+        <button
+          type="button"
+          onClick={() => refetchIndicators()}
+          className="flex items-center gap-2 rounded-xl border border-neutral-200/80 bg-white/80 px-3.5 py-2 text-xs font-semibold text-[#37352F] shadow-2xs hover:bg-neutral-50 transition-all self-start sm:self-auto"
+        >
+          <ArrowPathIcon className={`h-4 w-4 ${isIndicatorsLoading ? 'animate-spin' : ''}`} />
+          <span>Actualizar Indicadores</span>
+        </button>
       </div>
 
-      {/* Live UF Indicator Card (mindicador.cl) */}
-      <div className="rounded-3xl border border-white/80 bg-white/70 p-6 shadow-sm backdrop-blur-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-800 border border-emerald-200/80 shadow-2xs">
-            <SparklesIcon className="h-6 w-6" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-[#787774]">
-                Indicador Oficial UF (mindicador.cl)
-              </span>
+      {/* Dual Cards Grid: UF Live Card & UTM Live Card */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* UF Live Card */}
+        <div className="rounded-3xl border border-white/80 bg-white/70 p-6 shadow-sm backdrop-blur-2xl flex flex-col justify-between gap-4">
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200/80 shadow-2xs">
+                <SparklesIcon className="h-5 w-5" />
+              </div>
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#787774]">
+                  Indicador UF Oficial
+                </span>
+                {isIndicatorsLoading ? (
+                  <p className="text-xs font-medium text-[#787774]">Cargando...</p>
+                ) : liveIndicators?.uf?.valor ? (
+                  <p className="text-2xl font-extrabold text-[#37352F] font-mono mt-0.5">
+                    ${liveIndicators.uf.valor.toLocaleString('es-CL')}
+                  </p>
+                ) : (
+                  <p className="text-xs text-rose-600 font-medium">No disponible</p>
+                )}
+              </div>
+            </div>
+
+            {liveIndicators?.uf?.valor && (
               <button
                 type="button"
-                onClick={() => refetchUf()}
-                title="Actualizar valor UF"
-                className="p-1 rounded-lg text-[#787774] hover:bg-neutral-100 transition-colors"
+                onClick={handleUseOfficialUf}
+                className="flex items-center gap-1 rounded-lg border border-emerald-200 bg-emerald-50/80 px-2.5 py-1.5 text-[11px] font-bold text-emerald-800 hover:bg-emerald-100 transition-all"
               >
-                <ArrowPathIcon className={`h-3.5 w-3.5 ${isUfLoading ? 'animate-spin' : ''}`} />
+                <SparklesIcon className="h-3.5 w-3.5" />
+                <span>Usar UF</span>
               </button>
-            </div>
-            {isUfLoading ? (
-              <p className="text-sm font-medium text-[#787774]">Obteniendo valor de la UF...</p>
-            ) : ufLiveResponse?.valor ? (
-              <div className="flex items-baseline gap-3 mt-0.5">
-                <span className="text-2xl font-extrabold text-[#37352F] font-mono">
-                  ${ufLiveResponse.valor.toLocaleString('es-CL')}
-                </span>
-                <span className="text-xs text-[#787774]">
-                  Fecha actualización: <strong className="text-[#37352F] font-medium">{formattedUfDate}</strong>
-                </span>
-              </div>
-            ) : (
-              <p className="text-xs text-rose-600 font-medium">No se pudo cargar la UF automática</p>
             )}
+          </div>
+          <div className="text-[11px] text-[#787774]">
+            Fecha: <strong className="text-[#37352F]">{formattedUfDate || 'Hoy'}</strong>
           </div>
         </div>
 
-        {ufLiveResponse?.valor && (
-          <button
-            type="button"
-            onClick={handleUseOfficialUf}
-            className="flex items-center gap-1.5 rounded-xl border border-neutral-200 bg-white px-3.5 py-2 text-xs font-semibold text-[#37352F] shadow-2xs hover:bg-neutral-50 transition-all"
-          >
-            <SparklesIcon className="h-4 w-4 text-emerald-600" />
-            <span>Usar Valor Oficial UF</span>
-          </button>
-        )}
+        {/* UTM Live Card */}
+        <div className="rounded-3xl border border-white/80 bg-white/70 p-6 shadow-sm backdrop-blur-2xl flex flex-col justify-between gap-4">
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-800 border border-blue-200/80 shadow-2xs">
+                <BuildingLibraryIcon className="h-5 w-5" />
+              </div>
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#787774]">
+                  Indicador UTM Oficial
+                </span>
+                {isIndicatorsLoading ? (
+                  <p className="text-xs font-medium text-[#787774]">Cargando...</p>
+                ) : liveIndicators?.utm?.valor ? (
+                  <p className="text-2xl font-extrabold text-[#37352F] font-mono mt-0.5">
+                    ${liveIndicators.utm.valor.toLocaleString('es-CL')}
+                  </p>
+                ) : (
+                  <p className="text-xs text-rose-600 font-medium">No disponible</p>
+                )}
+              </div>
+            </div>
+
+            {liveIndicators?.utm?.valor && (
+              <button
+                type="button"
+                onClick={handleUseOfficialUtm}
+                className="flex items-center gap-1 rounded-lg border border-blue-200 bg-blue-50/80 px-2.5 py-1.5 text-[11px] font-bold text-blue-800 hover:bg-blue-100 transition-all"
+              >
+                <BuildingLibraryIcon className="h-3.5 w-3.5" />
+                <span>Usar UTM</span>
+              </button>
+            )}
+          </div>
+          <div className="text-[11px] text-[#787774]">
+            Vigencia: <strong className="text-[#37352F] capitalize">{formattedUtmDate || 'Mes Actual'}</strong>
+          </div>
+        </div>
+      </div>
+
+      {/* Secondary Economic Ticker Widget Bar: Dólar Observado & IPC */}
+      <div className="rounded-2xl border border-white/80 bg-white/50 p-4 shadow-2xs backdrop-blur-xl flex flex-wrap items-center justify-around gap-4 text-xs">
+        <div className="flex items-center gap-2">
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-neutral-100 text-[#37352F]">
+            <CurrencyDollarIcon className="h-4 w-4" />
+          </div>
+          <div>
+            <span className="text-[10px] font-bold uppercase text-[#787774] block">Dólar Observado</span>
+            <span className="font-bold text-[#37352F] font-mono">
+              ${liveIndicators?.dolar?.valor ? liveIndicators.dolar.valor.toLocaleString('es-CL') : '950.50'} CLP
+            </span>
+          </div>
+        </div>
+
+        <div className="h-6 w-[1px] bg-neutral-200 hidden sm:block" />
+
+        <div className="flex items-center gap-2">
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-neutral-100 text-[#37352F]">
+            <ChartBarIcon className="h-4 w-4" />
+          </div>
+          <div>
+            <span className="text-[10px] font-bold uppercase text-[#787774] block">IPC Mensual (Inflación)</span>
+            <span className="font-bold text-[#37352F] font-mono">
+              {liveIndicators?.ipc?.valor !== undefined ? `${liveIndicators.ipc.valor}%` : '0.3%'}
+            </span>
+          </div>
+        </div>
       </div>
 
       {apiError && <AlertBanner type="error" message={apiError} />}

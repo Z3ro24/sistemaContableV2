@@ -9,8 +9,6 @@ import SidebarItem from './SidebarItem';
 import {
   HomeIcon,
   ChartBarIcon,
-  CreditCardIcon,
-  ChartPieIcon,
   BanknotesIcon,
   AdjustmentsHorizontalIcon,
   Cog6ToothIcon,
@@ -22,6 +20,7 @@ import {
   ChevronDownIcon,
   UserGroupIcon,
   BuildingOfficeIcon,
+  DocumentTextIcon,
 } from '@heroicons/react/24/outline';
 
 export const Sidebar: React.FC = () => {
@@ -32,6 +31,7 @@ export const Sidebar: React.FC = () => {
   const { user } = useAppSelector((state) => state.auth);
 
   const isSettingsActive = location.pathname.startsWith('/settings');
+  const isRemunerationActive = location.pathname.startsWith('/payrolls');
 
   const logoutMutation = useMutation({
     mutationFn: authService.logout,
@@ -110,12 +110,91 @@ export const Sidebar: React.FC = () => {
               Menú Principal
             </div>
           )}
-          <SidebarItem to="/home" icon={HomeIcon} label="Inicio" isCollapsed={isCollapsed} />
-          <SidebarItem to="/transactions" icon={CreditCardIcon} label="Transacciones" isCollapsed={isCollapsed} />
-          <SidebarItem to="/payrolls" icon={BanknotesIcon} label="Liquidaciones" isCollapsed={isCollapsed} />
-          <SidebarItem to="/reports" icon={ChartPieIcon} label="Reportes" isCollapsed={isCollapsed} />
 
-          {/* Settings Accordion Sub-Menu */}
+          {/* 1. Dashboard / Inicio */}
+          <SidebarItem to="/home" icon={HomeIcon} label="Dashboard" isCollapsed={isCollapsed} />
+
+          {/* 2. Remuneración Accordion Sub-Menu */}
+          {isCollapsed ? (
+            /* Collapsed State: Popover Menu */
+            <Menu as="div" className="relative flex justify-center w-full">
+              <MenuButton
+                title="Remuneración"
+                className={`relative flex h-10 w-10 items-center justify-center rounded-xl border border-transparent transition-all duration-200 ${
+                  isRemunerationActive
+                    ? 'border-white/80 bg-white/80 text-[#37352F] shadow-2xs backdrop-blur-md'
+                    : 'text-[#787774] hover:bg-white/50 hover:text-[#37352F]'
+                }`}
+              >
+                <BanknotesIcon className="h-5 w-5 flex-shrink-0" />
+              </MenuButton>
+
+              <MenuItems
+                transition
+                className="absolute left-full top-0 ml-3 w-56 origin-top-left rounded-2xl border border-white/90 bg-white/95 p-2 shadow-2xl backdrop-blur-2xl transition duration-150 ease-out data-[closed]:scale-95 data-[closed]:opacity-0 focus:outline-none z-50"
+              >
+                <div className="px-3 py-1.5 border-b border-neutral-200/60 mb-1 text-[10px] font-bold uppercase tracking-wider text-[#787774]">
+                  Remuneración
+                </div>
+
+                <MenuItem>
+                  {({ focus }) => (
+                    <button
+                      type="button"
+                      onClick={() => navigate('/payrolls')}
+                      className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium transition-colors ${
+                        focus ? 'bg-[#37352F] text-white' : 'text-[#37352F] hover:bg-neutral-100'
+                      }`}
+                    >
+                      <DocumentTextIcon className="h-4 w-4 flex-shrink-0" />
+                      <span>Liquidación de Sueldo</span>
+                    </button>
+                  )}
+                </MenuItem>
+
+                <MenuItem>
+                  {({ focus }) => (
+                    <button
+                      type="button"
+                      onClick={() => navigate('/settings/workers')}
+                      className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium transition-colors ${
+                        focus ? 'bg-[#37352F] text-white' : 'text-[#37352F] hover:bg-neutral-100'
+                      }`}
+                    >
+                      <UserGroupIcon className="h-4 w-4 flex-shrink-0" />
+                      <span>Fichas de empleado</span>
+                    </button>
+                  )}
+                </MenuItem>
+              </MenuItems>
+            </Menu>
+          ) : (
+            /* Expanded State: Standard Disclosure Accordion */
+            <Disclosure defaultOpen={isRemunerationActive}>
+              {({ open }) => (
+                <div className="space-y-1">
+                  <DisclosureButton className="group relative flex w-full items-center justify-between rounded-xl px-3.5 py-2.5 text-sm font-medium text-[#787774] border border-transparent transition-all duration-200 hover:bg-white/50 hover:text-[#37352F] focus:outline-none">
+                    <div className="flex items-center gap-3">
+                      <BanknotesIcon className="h-5 w-5 flex-shrink-0 text-[#787774] transition-colors group-hover:text-[#37352F]" />
+                      <span>Remuneración</span>
+                    </div>
+                    <ChevronDownIcon
+                      className={`h-4 w-4 text-[#787774] transition-transform duration-200 ${
+                        open ? 'rotate-180 transform' : ''
+                      }`}
+                    />
+                  </DisclosureButton>
+
+                  <DisclosurePanel transition className="space-y-1 pl-4 transition duration-150 ease-out data-[closed]:opacity-0">
+                    <SidebarItem to="/payrolls" icon={DocumentTextIcon} label="Liquidación de Sueldo" isCollapsed={false} />
+                    <SidebarItem to="/settings/workers" icon={UserGroupIcon} label="Fichas de empleado" isCollapsed={false} />
+                  </DisclosurePanel>
+                </div>
+              )}
+            </Disclosure>
+          )}
+
+          {/* 3. Settings Accordion Sub-Menu */}
           {isCollapsed ? (
             /* Collapsed State: Popover Menu for Accordion Items (Elevated z-50 above dashboard) */
             <Menu as="div" className="relative flex justify-center w-full">

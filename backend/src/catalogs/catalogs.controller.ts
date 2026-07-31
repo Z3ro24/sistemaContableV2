@@ -12,6 +12,11 @@ export class CatalogsController {
     return this.catalogsService.getLiveUf();
   }
 
+  @Get('indicators-live')
+  getLiveIndicators() {
+    return this.catalogsService.getLiveIndicators();
+  }
+
   @Get('afp')
   getAfps() {
     return this.catalogsService.getAfps();
