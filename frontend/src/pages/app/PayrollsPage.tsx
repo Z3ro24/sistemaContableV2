@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Menu, MenuButton, MenuItems, MenuItem } from '@headlessui/react';
 import {
   BanknotesIcon,
   CalculatorIcon,
@@ -7,6 +8,10 @@ import {
   TrashIcon,
   XMarkIcon,
   ArrowDownTrayIcon,
+  ChevronDownIcon,
+  ArchiveBoxIcon,
+  TableCellsIcon,
+  ArrowPathIcon,
 } from '@heroicons/react/24/outline';
 import payrollsService, { type Payroll } from '../../services/payrollsService';
 import workersService from '../../services/workersService';
@@ -14,6 +19,11 @@ import companiesService from '../../services/companiesService';
 import CustomSelect from '../../components/common/CustomSelect';
 import AlertBanner from '../../components/common/AlertBanner';
 import PayrollPdfModal from '../../components/modals/PayrollPdfModal';
+import {
+  exportPaymentCsv,
+  generateUnifiedPdf,
+  generateZipOfPdfs,
+} from '../../utils/massExportUtils';
 
 interface SelectOption {
   value: string;
@@ -25,6 +35,10 @@ export const PayrollsPage: React.FC = () => {
   const [isCalcModalOpen, setIsCalcModalOpen] = useState(false);
   const [selectedPayroll, setSelectedPayroll] = useState<Payroll | null>(null);
   const [pdfModalPayroll, setPdfModalPayroll] = useState<Payroll | null>(null);
+
+  // Mass Export Loading Status
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportProgressText, setExportProgressText] = useState('');
 
   // Form state
   const [workerId, setWorkerId] = useState('');
@@ -74,6 +88,48 @@ export const PayrollsPage: React.FC = () => {
     { value: 'all', label: 'Todas las Empresas' },
     ...companies.map((c) => ({ value: c.id.toString(), label: c.name })),
   ];
+
+  const getSelectedCompanyName = () => {
+    if (filterCompanyId === 'all') return 'Todas_Las_Empresas';
+    const found = companies.find((c) => c.id.toString() === filterCompanyId);
+    return found ? found.name : 'Empresa';
+  };
+
+  // Mass Export Handlers
+  const handleExportCsv = () => {
+    if (payrolls.length === 0) return;
+    exportPaymentCsv(payrolls, getSelectedCompanyName());
+  };
+
+  const handleExportUnifiedPdf = async () => {
+    if (payrolls.length === 0) return;
+    setIsExporting(true);
+    setExportProgressText('Generando PDF Unificado...');
+    try {
+      await generateUnifiedPdf(payrolls, getSelectedCompanyName());
+    } catch (err) {
+      setPageApiError('Error al exportar PDF unificado');
+    } finally {
+      setIsExporting(false);
+      setExportProgressText('');
+    }
+  };
+
+  const handleExportZip = async () => {
+    if (payrolls.length === 0) return;
+    setIsExporting(true);
+    setExportProgressText('Iniciando empaquetado ZIP...');
+    try {
+      await generateZipOfPdfs(payrolls, getSelectedCompanyName(), (current, total) => {
+        setExportProgressText(`Generando PDF ${current} de ${total}...`);
+      });
+    } catch (err) {
+      setPageApiError('Error al generar paquete ZIP de liquidaciones');
+    } finally {
+      setIsExporting(false);
+      setExportProgressText('');
+    }
+  };
 
   const calculateMutation = useMutation({
     mutationFn: payrollsService.calculateAndSave,
@@ -147,7 +203,7 @@ export const PayrollsPage: React.FC = () => {
               Liquidaciones de Sueldo
             </h1>
             <p className="text-xs text-[#787774]">
-              Cálculo automatizado de haberes, descuentos AFP/Salud/Impuesto y emisión de sueldos en PDF.
+              Cálculo automatizado de haberes, descuentos AFP/Salud/Impuesto y exportación masiva.
             </p>
           </div>
         </div>
@@ -164,15 +220,98 @@ export const PayrollsPage: React.FC = () => {
 
       {pageApiError && <AlertBanner type="error" message={pageApiError} />}
 
-      {/* Filter Bar */}
-      <div className="flex items-center justify-between gap-3">
-        <div className="w-64">
+      {/* Export Status Indicator Toast */}
+      {isExporting && (
+        <div className="rounded-xl border border-blue-200 bg-blue-50/90 p-3 text-xs font-semibold text-blue-900 flex items-center gap-2 shadow-2xs">
+          <ArrowPathIcon className="h-4 w-4 animate-spin text-blue-700" />
+          <span>{exportProgressText || 'Procesando exportación masiva...'}</span>
+        </div>
+      )}
+
+      {/* Filter & Mass Export Bar */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+        <div className="w-full sm:w-64">
           <CustomSelect<SelectOption>
             options={filterCompanyOptions}
             value={filterCompanyOptions.find((o) => o.value === filterCompanyId) || filterCompanyOptions[0]}
             onChange={(opt) => setFilterCompanyId(opt?.value || 'all')}
           />
         </div>
+
+        {/* Mass Export Menu Dropdown */}
+        <Menu as="div" className="relative self-end sm:self-auto">
+          <MenuButton
+            disabled={payrolls.length === 0 || isExporting}
+            className="flex items-center gap-2 rounded-xl border border-neutral-300 bg-white px-4 py-2 text-xs font-semibold text-[#37352F] shadow-2xs hover:bg-neutral-50 transition-all disabled:opacity-50"
+          >
+            <ArrowDownTrayIcon className="h-4 w-4 text-[#787774]" />
+            <span>Exportar Masivo</span>
+            <ChevronDownIcon className="h-3.5 w-3.5 text-[#787774]" />
+          </MenuButton>
+
+          <MenuItems
+            transition
+            className="absolute right-0 mt-2 w-64 origin-top-right rounded-2xl border border-white/90 bg-white/95 p-2 shadow-2xl backdrop-blur-2xl transition duration-150 ease-out data-[closed]:scale-95 data-[closed]:opacity-0 focus:outline-none z-50 space-y-0.5"
+          >
+            <div className="px-3 py-1.5 border-b border-neutral-200/60 mb-1 text-[10px] font-bold uppercase tracking-wider text-[#787774]">
+              Formatos de Exportación ({payrolls.length})
+            </div>
+
+            <MenuItem>
+              {({ focus }) => (
+                <button
+                  type="button"
+                  onClick={handleExportUnifiedPdf}
+                  className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium transition-colors ${
+                    focus ? 'bg-[#37352F] text-white' : 'text-[#37352F] hover:bg-neutral-100'
+                  }`}
+                >
+                  <DocumentTextIcon className="h-4 w-4 flex-shrink-0" />
+                  <div className="text-left">
+                    <span className="block font-bold">📄 PDF Unificado</span>
+                    <span className="text-[10px] opacity-80">1 solo PDF con todas las liquidaciones</span>
+                  </div>
+                </button>
+              )}
+            </MenuItem>
+
+            <MenuItem>
+              {({ focus }) => (
+                <button
+                  type="button"
+                  onClick={handleExportZip}
+                  className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium transition-colors ${
+                    focus ? 'bg-[#37352F] text-white' : 'text-[#37352F] hover:bg-neutral-100'
+                  }`}
+                >
+                  <ArchiveBoxIcon className="h-4 w-4 flex-shrink-0 text-amber-600" />
+                  <div className="text-left">
+                    <span className="block font-bold">📦 Paquete ZIP</span>
+                    <span className="text-[10px] opacity-80">PDFs individuales por trabajador</span>
+                  </div>
+                </button>
+              )}
+            </MenuItem>
+
+            <MenuItem>
+              {({ focus }) => (
+                <button
+                  type="button"
+                  onClick={handleExportCsv}
+                  className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium transition-colors ${
+                    focus ? 'bg-[#37352F] text-white' : 'text-[#37352F] hover:bg-neutral-100'
+                  }`}
+                >
+                  <TableCellsIcon className="h-4 w-4 flex-shrink-0 text-emerald-600" />
+                  <div className="text-left">
+                    <span className="block font-bold">📊 Nómina Excel / CSV</span>
+                    <span className="text-[10px] opacity-80">Resumen con datos bancarios de pago</span>
+                  </div>
+                </button>
+              )}
+            </MenuItem>
+          </MenuItems>
+        </Menu>
       </div>
 
       {/* Content Area */}

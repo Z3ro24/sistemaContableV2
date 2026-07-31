@@ -67,8 +67,29 @@ export const PayrollPdfModal: React.FC<PayrollPdfModalProps> = ({ isOpen, onClos
   const legalDeductions = payroll.details?.filter((d) => d.conceptType === 'LEGAL_DEDUCTION') || [];
   const otherDeductions = payroll.details?.filter((d) => d.conceptType === 'OTHER_DEDUCTION') || [];
 
-  const handleDownloadPdf = () => {
+  const handleDownloadPdf = async () => {
     if (!documentRef.current) return;
+
+    // Clone element to a standalone invisible container at (0,0) with z-index -9999
+    // This avoids html2canvas negative offset crop bugs and modal scroll clipping
+    const container = document.createElement('div');
+    container.style.position = 'fixed';
+    container.style.left = '0px';
+    container.style.top = '0px';
+    container.style.zIndex = '-9999';
+    container.style.opacity = '1';
+    container.style.pointerEvents = 'none';
+    container.style.width = '750px';
+    container.style.backgroundColor = '#ffffff';
+
+    const clone = documentRef.current.cloneNode(true) as HTMLElement;
+    clone.style.margin = '0';
+    clone.style.maxWidth = '100%';
+    clone.style.boxShadow = 'none';
+    clone.style.border = 'none';
+
+    container.appendChild(clone);
+    document.body.appendChild(container);
 
     const opt = {
       margin: [10, 10, 10, 10] as [number, number, number, number],
@@ -78,19 +99,14 @@ export const PayrollPdfModal: React.FC<PayrollPdfModalProps> = ({ isOpen, onClos
         scale: 2,
         useCORS: true,
         logging: false,
+        scrollX: 0,
+        scrollY: 0,
+        windowWidth: 750,
         onclone: (clonedDoc: Document) => {
-          // Remove any oklch CSS color declarations in cloned document to prevent html2canvas parsing errors
-          const elements = clonedDoc.querySelectorAll('*');
-          elements.forEach((el: any) => {
-            const style = window.getComputedStyle(el);
-            if (style.backgroundColor && style.backgroundColor.includes('oklch')) {
-              el.style.backgroundColor = '#ffffff';
-            }
-            if (style.color && style.color.includes('oklch')) {
-              el.style.color = '#37352F';
-            }
-            if (style.borderColor && style.borderColor.includes('oklch')) {
-              el.style.borderColor = '#e5e5e5';
+          const styleTags = clonedDoc.querySelectorAll('style');
+          styleTags.forEach((tag) => {
+            if (tag.innerHTML.includes('oklch')) {
+              tag.innerHTML = tag.innerHTML.replace(/oklch\([^)]+\)/g, '#37352f');
             }
           });
         },
@@ -98,7 +114,11 @@ export const PayrollPdfModal: React.FC<PayrollPdfModalProps> = ({ isOpen, onClos
       jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' as const },
     };
 
-    html2pdf().set(opt).from(documentRef.current).save();
+    try {
+      await html2pdf().set(opt).from(container).save();
+    } finally {
+      document.body.removeChild(container);
+    }
   };
 
   const handlePrint = () => {
