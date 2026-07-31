@@ -15,6 +15,13 @@ interface SelectOption {
   label: string;
 }
 
+const bankAccountTypeOptions: SelectOption[] = [
+  { value: '', label: '-- Seleccionar Tipo de Cuenta --' },
+  { value: 'Cuenta Vista / RUT', label: 'Cuenta Vista / RUT' },
+  { value: 'Cuenta Corriente', label: 'Cuenta Corriente' },
+  { value: 'Cuenta de Ahorro', label: 'Cuenta de Ahorro' },
+];
+
 export const EditWorkerPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -379,16 +386,11 @@ export const EditWorkerPage: React.FC = () => {
               </div>
               <div>
                 <label className="block text-[11px] font-semibold text-[#787774] mb-1">Tipo de Cuenta</label>
-                <select
-                  value={bankAccountType}
-                  onChange={(e) => setBankAccountType(e.target.value)}
-                  className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs text-[#37352F] shadow-2xs focus:border-[#37352F] focus:outline-none focus:ring-1 focus:ring-[#37352F]"
-                >
-                  <option value="">-- Seleccionar --</option>
-                  <option value="Cuenta Vista / RUT">Cuenta Vista / RUT</option>
-                  <option value="Cuenta Corriente">Cuenta Corriente</option>
-                  <option value="Cuenta de Ahorro">Cuenta de Ahorro</option>
-                </select>
+                <CustomSelect<SelectOption>
+                  options={bankAccountTypeOptions}
+                  value={bankAccountTypeOptions.find((o) => o.value === bankAccountType) || bankAccountTypeOptions[0]}
+                  onChange={(opt) => setBankAccountType(opt?.value || '')}
+                />
               </div>
               <div>
                 <label className="block text-[11px] font-semibold text-[#787774] mb-1">Número de Cuenta</label>

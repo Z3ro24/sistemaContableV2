@@ -34,7 +34,9 @@ export const PayrollsPage: React.FC = () => {
   const [otherNonTaxableIncome, setOtherNonTaxableIncome] = useState('0');
   const [otherDeductions, setOtherDeductions] = useState('0');
 
-  const [apiError, setApiError] = useState<string | null>(null);
+  // Separated Error States
+  const [pageApiError, setPageApiError] = useState<string | null>(null);
+  const [modalApiError, setModalApiError] = useState<string | null>(null);
 
   // Filter state
   const [filterCompanyId, setFilterCompanyId] = useState('all');
@@ -75,11 +77,12 @@ export const PayrollsPage: React.FC = () => {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['payrolls'] });
       setIsCalcModalOpen(false);
+      setModalApiError(null);
       setSelectedPayroll(data);
     },
     onError: (err: any) => {
       const message = err.response?.data?.message || 'Error al calcular la liquidación';
-      setApiError(Array.isArray(message) ? message.join(', ') : message);
+      setModalApiError(Array.isArray(message) ? message.join(', ') : message);
     },
   });
 
@@ -90,16 +93,16 @@ export const PayrollsPage: React.FC = () => {
     },
     onError: (err: any) => {
       const message = err.response?.data?.message || 'Error al eliminar la liquidación';
-      setApiError(Array.isArray(message) ? message.join(', ') : message);
+      setPageApiError(Array.isArray(message) ? message.join(', ') : message);
     },
   });
 
   const handleCalculateSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setApiError(null);
+    setModalApiError(null);
 
     if (!workerId) {
-      setApiError('Debe seleccionar una persona / trabajador');
+      setModalApiError('Debe seleccionar una persona / trabajador');
       return;
     }
 
@@ -118,8 +121,14 @@ export const PayrollsPage: React.FC = () => {
 
   const handleDelete = (id: number, workerName: string, period: string) => {
     if (window.confirm(`¿Estás seguro de eliminar la liquidación de ${workerName} (${period})?`)) {
+      setPageApiError(null);
       deleteMutation.mutate(id);
     }
+  };
+
+  const handleOpenModal = () => {
+    setModalApiError(null);
+    setIsCalcModalOpen(true);
   };
 
   return (
@@ -142,10 +151,7 @@ export const PayrollsPage: React.FC = () => {
 
         <button
           type="button"
-          onClick={() => {
-            setApiError(null);
-            setIsCalcModalOpen(true);
-          }}
+          onClick={handleOpenModal}
           className="flex items-center justify-center gap-2 rounded-xl bg-[#37352F] px-4 py-2.5 text-xs font-semibold text-white shadow-sm transition-all hover:bg-[#201F1C] focus:outline-none focus:ring-2 focus:ring-neutral-400"
         >
           <CalculatorIcon className="h-4 w-4" />
@@ -153,7 +159,7 @@ export const PayrollsPage: React.FC = () => {
         </button>
       </div>
 
-      {apiError && <AlertBanner type="error" message={apiError} />}
+      {pageApiError && <AlertBanner type="error" message={pageApiError} />}
 
       {/* Filter Bar */}
       <div className="flex items-center justify-between gap-3">
@@ -247,10 +253,10 @@ export const PayrollsPage: React.FC = () => {
       {/* Modal: Calculate Payroll */}
       {isCalcModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-xs">
-          <div className="w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-3xl border border-white/80 bg-white/95 p-6 shadow-2xl backdrop-blur-2xl">
-            <div className="flex items-center justify-between pb-3 border-b border-neutral-200/60">
+          <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl border border-white/80 bg-white/95 p-6 shadow-2xl backdrop-blur-2xl">
+            <div className="flex items-center justify-between pb-4 border-b border-neutral-200/60">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#37352F] text-white">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#37352F] text-white shadow-xs">
                   <CalculatorIcon className="h-5 w-5" />
                 </div>
                 <h3 className="text-lg font-bold text-[#37352F]">Calcular Liquidación de Sueldo</h3>
@@ -258,41 +264,46 @@ export const PayrollsPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsCalcModalOpen(false)}
-                className="p-1.5 rounded-lg text-[#787774] hover:bg-neutral-100"
+                className="p-1.5 rounded-lg text-[#787774] hover:bg-neutral-100 hover:text-[#37352F]"
               >
                 <XMarkIcon className="h-5 w-5" />
               </button>
             </div>
 
-            <form onSubmit={handleCalculateSubmit} className="mt-4 space-y-4">
-              {apiError && <AlertBanner type="error" message={apiError} />}
+            <form onSubmit={handleCalculateSubmit} className="mt-5 space-y-4">
+              {/* Modal Error Banner ONLY */}
+              {modalApiError && <AlertBanner type="error" message={modalApiError} />}
 
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-[#787774] mb-1">
-                  Trabajador *
-                </label>
-                <CustomSelect<SelectOption>
-                  options={workerOptions}
-                  value={workerOptions.find((o) => o.value === workerId) || workerOptions[0]}
-                  onChange={(opt) => setWorkerId(opt?.value || '')}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-[#787774] mb-1">
+              {/* Grid Row 1: Trabajador (Span 2) & Período (Span 1) */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4.5 items-end">
+                <div className="sm:col-span-2 flex flex-col">
+                  <label className="h-5 flex items-center mb-1 text-xs font-semibold uppercase tracking-wider text-[#787774]">
+                    Persona / Trabajador *
+                  </label>
+                  <CustomSelect<SelectOption>
+                    options={workerOptions}
+                    value={workerOptions.find((o) => o.value === workerId) || workerOptions[0]}
+                    onChange={(opt) => setWorkerId(opt?.value || '')}
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <label className="h-5 flex items-center mb-1 text-xs font-semibold uppercase tracking-wider text-[#787774]">
                     Período (YYYY-MM) *
                   </label>
                   <input
                     type="month"
                     value={periodYyyyMm}
                     onChange={(e) => setPeriodYyyyMm(e.target.value)}
-                    className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs font-mono text-[#37352F] shadow-2xs focus:border-[#37352F] focus:outline-none"
+                    className="h-[38px] w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs font-mono text-[#37352F] shadow-2xs focus:border-[#37352F] focus:outline-none focus:ring-1 focus:ring-[#37352F]"
                     required
                   />
                 </div>
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-[#787774] mb-1">
+              </div>
+
+              {/* Grid Row 2: Días Trabajados, Horas 50%, Horas 100% */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4.5 items-end">
+                <div className="flex flex-col">
+                  <label className="h-5 flex items-center mb-1 text-xs font-semibold uppercase tracking-wider text-[#787774]">
                     Días Trabajados (Max 30)
                   </label>
                   <input
@@ -301,14 +312,11 @@ export const PayrollsPage: React.FC = () => {
                     min={0}
                     value={workedDays}
                     onChange={(e) => setWorkedDays(e.target.value)}
-                    className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs text-[#37352F] shadow-2xs focus:border-[#37352F] focus:outline-none"
+                    className="h-[38px] w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs text-[#37352F] shadow-2xs focus:border-[#37352F] focus:outline-none focus:ring-1 focus:ring-[#37352F]"
                   />
                 </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-[#787774] mb-1">
+                <div className="flex flex-col">
+                  <label className="h-5 flex items-center mb-1 text-xs font-semibold uppercase tracking-wider text-[#787774]">
                     Horas Extras 50%
                   </label>
                   <input
@@ -316,11 +324,11 @@ export const PayrollsPage: React.FC = () => {
                     step="0.5"
                     value={overtime50Hrs}
                     onChange={(e) => setOvertime50Hrs(e.target.value)}
-                    className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs text-[#37352F] shadow-2xs focus:border-[#37352F] focus:outline-none"
+                    className="h-[38px] w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs text-[#37352F] shadow-2xs focus:border-[#37352F] focus:outline-none focus:ring-1 focus:ring-[#37352F]"
                   />
                 </div>
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-[#787774] mb-1">
+                <div className="flex flex-col">
+                  <label className="h-5 flex items-center mb-1 text-xs font-semibold uppercase tracking-wider text-[#787774]">
                     Horas Extras 100%
                   </label>
                   <input
@@ -328,63 +336,69 @@ export const PayrollsPage: React.FC = () => {
                     step="0.5"
                     value={overtime100Hrs}
                     onChange={(e) => setOvertime100Hrs(e.target.value)}
-                    className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs text-[#37352F] shadow-2xs focus:border-[#37352F] focus:outline-none"
+                    className="h-[38px] w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs text-[#37352F] shadow-2xs focus:border-[#37352F] focus:outline-none focus:ring-1 focus:ring-[#37352F]"
                   />
                 </div>
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-[#787774] mb-1">
+              </div>
+
+              {/* Grid Row 3: Cargas Familares, Otros Imponibles, Haberes No Imponibles */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4.5 items-end">
+                <div className="flex flex-col">
+                  <label className="h-5 flex items-center mb-1 text-xs font-semibold uppercase tracking-wider text-[#787774]">
                     Cargas Familiares
                   </label>
                   <input
                     type="number"
                     value={familyDependentsCount}
                     onChange={(e) => setFamilyDependentsCount(e.target.value)}
-                    className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs text-[#37352F] shadow-2xs focus:border-[#37352F] focus:outline-none"
+                    className="h-[38px] w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs text-[#37352F] shadow-2xs focus:border-[#37352F] focus:outline-none focus:ring-1 focus:ring-[#37352F]"
                   />
                 </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#787774] mb-1">
-                    Otros Haberes Imponibles ($)
+                <div className="flex flex-col">
+                  <label className="h-5 flex items-center mb-1 text-[11px] font-semibold uppercase tracking-wider text-[#787774]">
+                    Otros Imponibles ($)
                   </label>
                   <input
                     type="number"
                     value={otherTaxableIncome}
                     onChange={(e) => setOtherTaxableIncome(e.target.value)}
-                    className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs text-[#37352F] shadow-2xs focus:border-[#37352F] focus:outline-none"
+                    className="h-[38px] w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs text-[#37352F] shadow-2xs focus:border-[#37352F] focus:outline-none focus:ring-1 focus:ring-[#37352F]"
                   />
                 </div>
-                <div>
-                  <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#787774] mb-1">
-                    Haberes No Imponibles ($)
+                <div className="flex flex-col">
+                  <label className="h-5 flex items-center mb-1 text-[11px] font-semibold uppercase tracking-wider text-[#787774]">
+                    No Imponibles ($)
                   </label>
                   <input
                     type="number"
                     value={otherNonTaxableIncome}
                     onChange={(e) => setOtherNonTaxableIncome(e.target.value)}
-                    className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs text-[#37352F] shadow-2xs focus:border-[#37352F] focus:outline-none"
+                    className="h-[38px] w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs text-[#37352F] shadow-2xs focus:border-[#37352F] focus:outline-none focus:ring-1 focus:ring-[#37352F]"
                   />
                 </div>
-                <div>
-                  <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#787774] mb-1">
+              </div>
+
+              {/* Grid Row 4: Otros Descuentos */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4.5 items-end">
+                <div className="flex flex-col">
+                  <label className="h-5 flex items-center mb-1 text-[11px] font-semibold uppercase tracking-wider text-[#787774]">
                     Otros Descuentos ($)
                   </label>
                   <input
                     type="number"
                     value={otherDeductions}
                     onChange={(e) => setOtherDeductions(e.target.value)}
-                    className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs text-[#37352F] shadow-2xs focus:border-[#37352F] focus:outline-none"
+                    className="h-[38px] w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs text-[#37352F] shadow-2xs focus:border-[#37352F] focus:outline-none focus:ring-1 focus:ring-[#37352F]"
                   />
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-neutral-200/60 mt-4">
+              {/* Form Actions */}
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-neutral-200/60 mt-6">
                 <button
                   type="button"
                   onClick={() => setIsCalcModalOpen(false)}
-                  className="rounded-xl border border-neutral-200 bg-white px-4 py-2 text-xs font-medium text-[#37352F]"
+                  className="rounded-xl border border-neutral-200 bg-white px-4 py-2 text-xs font-medium text-[#37352F] shadow-2xs hover:bg-neutral-50"
                 >
                   Cancelar
                 </button>
@@ -417,7 +431,7 @@ export const PayrollsPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setSelectedPayroll(null)}
-                className="p-1.5 rounded-lg text-[#787774] hover:bg-neutral-100"
+                className="p-1.5 rounded-lg text-[#787774] hover:bg-neutral-100 hover:text-[#37352F]"
               >
                 <XMarkIcon className="h-5 w-5" />
               </button>

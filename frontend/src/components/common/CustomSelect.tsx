@@ -7,6 +7,7 @@ export function CustomSelect<
 >(props: SelectProps<Option, IsMulti, Group>) {
   return (
     <Select<Option, IsMulti, Group>
+      maxMenuHeight={200}
       {...props}
       unstyled
       classNames={{
@@ -17,7 +18,8 @@ export function CustomSelect<
               : 'border-neutral-200 hover:border-neutral-300'
           }`,
         menu: () =>
-          'mt-1.5 overflow-hidden rounded-2xl border border-white/90 bg-white/95 p-1.5 shadow-xl backdrop-blur-2xl text-xs z-50',
+          'absolute mt-1.5 w-full rounded-2xl border border-white/90 bg-white/95 p-1.5 shadow-2xl backdrop-blur-2xl text-xs z-50',
+        menuList: () => 'max-h-[180px] overflow-y-auto space-y-0.5 pr-1',
         option: (state) =>
           `rounded-xl px-3 py-2 text-xs font-medium cursor-pointer transition-colors ${
             state.isSelected

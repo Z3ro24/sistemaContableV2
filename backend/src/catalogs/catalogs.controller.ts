@@ -7,6 +7,11 @@ import { CatalogsService } from './catalogs.service';
 export class CatalogsController {
   constructor(private readonly catalogsService: CatalogsService) {}
 
+  @Get('uf-live')
+  getLiveUf() {
+    return this.catalogsService.getLiveUf();
+  }
+
   @Get('afp')
   getAfps() {
     return this.catalogsService.getAfps();

@@ -40,4 +40,48 @@ export class CatalogsService {
       orderBy: { name: 'asc' },
     });
   }
+
+  async getLiveUf() {
+    try {
+      const response = await fetch('https://mindicador.cl/api/uf');
+      if (response.ok) {
+        const data = await response.json();
+        if (data.serie && data.serie.length > 0) {
+          return {
+            valor: data.serie[0].valor,
+            fecha: data.serie[0].fecha,
+          };
+        }
+        if (data.uf && data.uf.valor) {
+          return {
+            valor: data.uf.valor,
+            fecha: data.uf.fecha,
+          };
+        }
+      }
+    } catch (e) {
+      // Fallback
+    }
+
+    try {
+      const mainResponse = await fetch('https://mindicador.cl/api');
+      if (mainResponse.ok) {
+        const mainData = await mainResponse.json();
+        if (mainData.uf && mainData.uf.valor) {
+          return {
+            valor: mainData.uf.valor,
+            fecha: mainData.uf.fecha,
+          };
+        }
+      }
+    } catch (e) {
+      // Fallback
+    }
+
+    // Default fallback if mindicador is offline
+    return {
+      valor: 40844.79,
+      fecha: new Date().toISOString(),
+    };
+  }
 }

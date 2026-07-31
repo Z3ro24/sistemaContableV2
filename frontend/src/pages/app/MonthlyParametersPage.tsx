@@ -1,7 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { AdjustmentsHorizontalIcon, PlusIcon, TrashIcon, CalendarIcon } from '@heroicons/react/24/outline';
+import {
+  AdjustmentsHorizontalIcon,
+  PlusIcon,
+  TrashIcon,
+  CalendarIcon,
+  InformationCircleIcon,
+  ArrowPathIcon,
+  SparklesIcon,
+} from '@heroicons/react/24/outline';
 import monthlyParametersService from '../../services/monthlyParametersService';
+import catalogsService from '../../services/catalogsService';
 import AlertBanner from '../../components/common/AlertBanner';
 
 // Default SII Tax Brackets (Chile)
@@ -24,6 +33,26 @@ const defaultFamilyBrackets = [
   { bracketLetter: 'D', incomeFrom: 1335448, incomeTo: 99999999, amountPerDependent: 0 },
 ];
 
+// Custom Label with Hover Tooltip
+const LabelWithTooltip: React.FC<{ label: string; tooltip: string; required?: boolean }> = ({
+  label,
+  tooltip,
+  required,
+}) => (
+  <div className="flex items-center gap-1 mb-1">
+    <label className="block text-[11px] font-semibold uppercase text-[#787774]">
+      {label} {required && '*'}
+    </label>
+    <div className="group relative flex items-center">
+      <InformationCircleIcon className="h-3.5 w-3.5 text-[#787774]/70 hover:text-[#37352F] cursor-help transition-colors" />
+      <div className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden w-48 rounded-xl border border-neutral-200/80 bg-[#37352F] p-2.5 text-[10px] leading-snug font-normal text-white shadow-xl group-hover:block z-30">
+        {tooltip}
+        <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-[#37352F]" />
+      </div>
+    </div>
+  </div>
+);
+
 export const MonthlyParametersPage: React.FC = () => {
   const queryClient = useQueryClient();
   const [periodYyyyMm, setPeriodYyyyMm] = useState('2026-07');
@@ -36,6 +65,54 @@ export const MonthlyParametersPage: React.FC = () => {
 
   const [apiError, setApiError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+
+  // Fetch live UF indicator using backend proxy (bypasses CORS & format variations)
+  const {
+    data: ufLiveResponse,
+    isLoading: isUfLoading,
+    refetch: refetchUf,
+  } = useQuery({
+    queryKey: ['mindicadorUfProxy'],
+    queryFn: async () => {
+      // 1. Try backend proxy
+      try {
+        const proxyData = await catalogsService.getLiveUf();
+        if (proxyData?.valor) {
+          return proxyData;
+        }
+      } catch (e) {
+        // Fallback to direct fetch
+      }
+
+      // 2. Direct client fetch fallback
+      const res = await fetch('https://mindicador.cl/api/uf');
+      if (!res.ok) {
+        throw new Error('Error al conectar con la API de mindicador.cl');
+      }
+      const data = await res.json();
+      if (data.serie && data.serie.length > 0) {
+        return { valor: data.serie[0].valor, fecha: data.serie[0].fecha };
+      }
+      if (data.uf && data.uf.valor) {
+        return { valor: data.uf.valor, fecha: data.uf.fecha };
+      }
+      throw new Error('No se pudo extraer el valor de la UF');
+    },
+    staleTime: 1000 * 60 * 30, // 30 mins cache
+  });
+
+  // Auto-fill UF value when API responds
+  useEffect(() => {
+    if (ufLiveResponse?.valor) {
+      setUfClosingValue(ufLiveResponse.valor.toString());
+    }
+  }, [ufLiveResponse]);
+
+  const handleUseOfficialUf = () => {
+    if (ufLiveResponse?.valor) {
+      setUfClosingValue(ufLiveResponse.valor.toString());
+    }
+  };
 
   const { data: parameters = [], isLoading } = useQuery({
     queryKey: ['monthlyParameters'],
@@ -91,6 +168,14 @@ export const MonthlyParametersPage: React.FC = () => {
     }
   };
 
+  const formattedUfDate = ufLiveResponse?.fecha
+    ? new Date(ufLiveResponse.fecha).toLocaleDateString('es-CL', {
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric',
+      })
+    : '';
+
   return (
     <div className="space-y-6 max-w-5xl selection:bg-neutral-200">
       {/* Header Banner */}
@@ -108,6 +193,55 @@ export const MonthlyParametersPage: React.FC = () => {
             </p>
           </div>
         </div>
+      </div>
+
+      {/* Live UF Indicator Card (mindicador.cl) */}
+      <div className="rounded-3xl border border-white/80 bg-white/70 p-6 shadow-sm backdrop-blur-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-800 border border-emerald-200/80 shadow-2xs">
+            <SparklesIcon className="h-6 w-6" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-[#787774]">
+                Indicador Oficial UF (mindicador.cl)
+              </span>
+              <button
+                type="button"
+                onClick={() => refetchUf()}
+                title="Actualizar valor UF"
+                className="p-1 rounded-lg text-[#787774] hover:bg-neutral-100 transition-colors"
+              >
+                <ArrowPathIcon className={`h-3.5 w-3.5 ${isUfLoading ? 'animate-spin' : ''}`} />
+              </button>
+            </div>
+            {isUfLoading ? (
+              <p className="text-sm font-medium text-[#787774]">Obteniendo valor de la UF...</p>
+            ) : ufLiveResponse?.valor ? (
+              <div className="flex items-baseline gap-3 mt-0.5">
+                <span className="text-2xl font-extrabold text-[#37352F] font-mono">
+                  ${ufLiveResponse.valor.toLocaleString('es-CL')}
+                </span>
+                <span className="text-xs text-[#787774]">
+                  Fecha actualización: <strong className="text-[#37352F] font-medium">{formattedUfDate}</strong>
+                </span>
+              </div>
+            ) : (
+              <p className="text-xs text-rose-600 font-medium">No se pudo cargar la UF automática</p>
+            )}
+          </div>
+        </div>
+
+        {ufLiveResponse?.valor && (
+          <button
+            type="button"
+            onClick={handleUseOfficialUf}
+            className="flex items-center gap-1.5 rounded-xl border border-neutral-200 bg-white px-3.5 py-2 text-xs font-semibold text-[#37352F] shadow-2xs hover:bg-neutral-50 transition-all"
+          >
+            <SparklesIcon className="h-4 w-4 text-emerald-600" />
+            <span>Usar Valor Oficial UF</span>
+          </button>
+        )}
       </div>
 
       {apiError && <AlertBanner type="error" message={apiError} />}
@@ -129,9 +263,11 @@ export const MonthlyParametersPage: React.FC = () => {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
-                <label className="block text-[11px] font-semibold uppercase text-[#787774] mb-1">
-                  Período (YYYY-MM) *
-                </label>
+                <LabelWithTooltip
+                  label="Período (YYYY-MM)"
+                  tooltip="Período mensual al que corresponden las variables (ej: 2026-07) para calcular las liquidaciones de ese mes."
+                  required
+                />
                 <input
                   type="month"
                   value={periodYyyyMm}
@@ -142,9 +278,11 @@ export const MonthlyParametersPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold uppercase text-[#787774] mb-1">
-                  Valor UF Cierre ($) *
-                </label>
+                <LabelWithTooltip
+                  label="Valor UF Cierre ($)"
+                  tooltip="Valor de la UF al cierre de mes, usado para topes imponibles de previsión e Isapres pactadas en UF."
+                  required
+                />
                 <input
                   type="number"
                   step="0.01"
@@ -156,9 +294,11 @@ export const MonthlyParametersPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold uppercase text-[#787774] mb-1">
-                  Valor UTM Mes ($) *
-                </label>
+                <LabelWithTooltip
+                  label="Valor UTM Mes ($)"
+                  tooltip="Unidad Tributaria Mensual usada para calcular los tramos del Impuesto Único de 2ª Categoría (SII)."
+                  required
+                />
                 <input
                   type="number"
                   step="0.01"
@@ -170,11 +310,13 @@ export const MonthlyParametersPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
               <div>
-                <label className="block text-[11px] font-semibold uppercase text-[#787774] mb-1">
-                  Sueldo Mínimo ($) *
-                </label>
+                <LabelWithTooltip
+                  label="Sueldo Mínimo ($)"
+                  tooltip="Ingreso Mínimo Mensual (IMM) vigente en Chile para trabajadores dependientes."
+                  required
+                />
                 <input
                   type="number"
                   value={minimumWage}
@@ -185,9 +327,11 @@ export const MonthlyParametersPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold uppercase text-[#787774] mb-1">
-                  Tope Imponible AFP (UF)
-                </label>
+                <LabelWithTooltip
+                  label="Tope AFP (UF)"
+                  tooltip="Límite máximo en UF (ej: 84.3 UF) sobre el cual se aplica el 10% + comisión de AFP."
+                  required
+                />
                 <input
                   type="number"
                   step="0.1"
@@ -199,9 +343,11 @@ export const MonthlyParametersPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold uppercase text-[#787774] mb-1">
-                  Tope Imponible AFC (UF)
-                </label>
+                <LabelWithTooltip
+                  label="Tope AFC (UF)"
+                  tooltip="Límite máximo en UF (ej: 126.6 UF) sobre el cual se aplica el Seguro de Cesantía (0.6%)."
+                  required
+                />
                 <input
                   type="number"
                   step="0.1"
@@ -213,9 +359,11 @@ export const MonthlyParametersPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold uppercase text-[#787774] mb-1">
-                  Tasa SIS (%)
-                </label>
+                <LabelWithTooltip
+                  label="Tasa SIS (%)"
+                  tooltip="Porcentaje del Seguro de Invalidez y Sobrevivencia abonado por el empleador."
+                  required
+                />
                 <input
                   type="number"
                   step="0.01"

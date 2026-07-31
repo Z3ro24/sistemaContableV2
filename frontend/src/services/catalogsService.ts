@@ -1,5 +1,10 @@
 import api from './apiService';
 
+export interface LiveUf {
+  valor: number;
+  fecha: string;
+}
+
 export interface Afp {
   id: number;
   name: string;
@@ -39,6 +44,11 @@ export interface JobPosition {
 }
 
 export const catalogsService = {
+  getLiveUf: async (): Promise<LiveUf> => {
+    const response = await api.get<LiveUf>('/catalogs/uf-live');
+    return response.data;
+  },
+
   getAfps: async (): Promise<Afp[]> => {
     const response = await api.get('/catalogs/afp');
     return response.data;

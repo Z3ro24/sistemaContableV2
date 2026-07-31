@@ -20,6 +20,13 @@ interface SelectOption {
   label: string;
 }
 
+const bankAccountTypeOptions: SelectOption[] = [
+  { value: '', label: '-- Seleccionar Tipo de Cuenta --' },
+  { value: 'Cuenta Vista / RUT', label: 'Cuenta Vista / RUT' },
+  { value: 'Cuenta Corriente', label: 'Cuenta Corriente' },
+  { value: 'Cuenta de Ahorro', label: 'Cuenta de Ahorro' },
+];
+
 export const WorkerModal: React.FC<WorkerModalProps> = ({ isOpen, onClose }) => {
   const [name, setName] = useState('');
   const [paternalLastName, setPaternalLastName] = useState('');
@@ -330,7 +337,7 @@ export const WorkerModal: React.FC<WorkerModalProps> = ({ isOpen, onClose }) => 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label className="block text-[11px] font-semibold text-[#787774] mb-1">
-                    AFP Affiliada
+                    AFP Afiliada
                   </label>
                   <CustomSelect<SelectOption>
                     options={afpOptions}
@@ -384,16 +391,11 @@ export const WorkerModal: React.FC<WorkerModalProps> = ({ isOpen, onClose }) => 
                   <label className="block text-[11px] font-semibold text-[#787774] mb-1">
                     Tipo de Cuenta
                   </label>
-                  <select
-                    value={bankAccountType}
-                    onChange={(e) => setBankAccountType(e.target.value)}
-                    className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs text-[#37352F] shadow-2xs focus:border-[#37352F] focus:outline-none focus:ring-1 focus:ring-[#37352F]"
-                  >
-                    <option value="">-- Seleccionar --</option>
-                    <option value="Cuenta Vista / RUT">Cuenta Vista / RUT</option>
-                    <option value="Cuenta Corriente">Cuenta Corriente</option>
-                    <option value="Cuenta de Ahorro">Cuenta de Ahorro</option>
-                  </select>
+                  <CustomSelect<SelectOption>
+                    options={bankAccountTypeOptions}
+                    value={bankAccountTypeOptions.find((o) => o.value === bankAccountType) || bankAccountTypeOptions[0]}
+                    onChange={(opt) => setBankAccountType(opt?.value || '')}
+                  />
                 </div>
                 <div>
                   <label className="block text-[11px] font-semibold text-[#787774] mb-1">
