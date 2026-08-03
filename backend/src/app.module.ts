@@ -14,6 +14,10 @@ import { CatalogsModule } from './catalogs/catalogs.module';
 import { MonthlyParametersModule } from './monthly-parameters/monthly-parameters.module';
 import { PayrollsModule } from './payrolls/payrolls.module';
 import { LreModule } from './lre/lre.module';
+import { ExportLogsModule } from './exports/export-logs/export-logs.module';
+import { PreviredExporterModule } from './exports/previred/previred-exporter.module';
+import { LreDtExporterModule } from './exports/lre-dt/lre-dt-exporter.module';
+import { BancosExporterModule } from './exports/bancos/bancos-exporter.module';
 
 @Module({
   imports: [
@@ -32,6 +36,10 @@ import { LreModule } from './lre/lre.module';
     MonthlyParametersModule,
     PayrollsModule,
     LreModule,
+    ExportLogsModule,
+    PreviredExporterModule,
+    LreDtExporterModule,
+    BancosExporterModule,
   ],
   controllers: [AppController],
   providers: [

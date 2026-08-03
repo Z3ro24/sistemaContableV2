@@ -9,6 +9,7 @@ import lreService from '../../services/lreService';
 import companiesService from '../../services/companiesService';
 import CustomSelect from '../../components/common/CustomSelect';
 import AlertBanner from '../../components/common/AlertBanner';
+import ExportHistoryTable from '../../components/common/ExportHistoryTable';
 
 interface SelectOption {
   value: string;
@@ -29,7 +30,7 @@ export const LrePage: React.FC = () => {
   const parsedCompanyId = filterCompanyId !== 'all' ? parseInt(filterCompanyId, 10) : undefined;
 
   // Fetch LRE Report Data
-  const { data: lreReport, isLoading, isError, error } = useQuery({
+  const { data: lreReport, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['lreReport', periodYyyyMm, filterCompanyId],
     queryFn: () => lreService.getReport(periodYyyyMm, parsedCompanyId),
   });
@@ -44,6 +45,7 @@ export const LrePage: React.FC = () => {
     setIsExporting(true);
     try {
       await lreService.downloadCsv(periodYyyyMm, parsedCompanyId);
+      refetch();
     } catch {
       alert('Error al descargar el archivo LRE');
     } finally {
@@ -204,6 +206,9 @@ export const LrePage: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Export History Log Table */}
+      <ExportHistoryTable exportType="LRE_CSV" periodYyyyMm={periodYyyyMm} companyId={parsedCompanyId} />
     </div>
   );
 };

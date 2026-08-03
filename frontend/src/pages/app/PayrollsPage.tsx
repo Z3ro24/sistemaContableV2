@@ -21,6 +21,7 @@ import CustomSelect from "../../components/common/CustomSelect";
 import AlertBanner from "../../components/common/AlertBanner";
 import PayrollPdfModal from "../../components/modals/PayrollPdfModal";
 import BankPayrollModal from "../../components/modals/BankPayrollModal";
+import previredExporterService from "../../services/previredExporterService";
 import {
   exportPaymentCsv,
   generateUnifiedPdf,
@@ -140,6 +141,22 @@ export const PayrollsPage: React.FC = () => {
       );
     } catch (err) {
       setPageApiError("Error al generar paquete ZIP de liquidaciones");
+    } finally {
+      setIsExporting(false);
+      setExportProgressText("");
+    }
+  };
+
+  const handleExportPrevired = async () => {
+    if (payrolls.length === 0) return;
+    setIsExporting(true);
+    setExportProgressText("Generando archivo PreviRed (.TXT)...");
+    try {
+      const companyId = filterCompanyId !== "all" ? parseInt(filterCompanyId, 10) : undefined;
+      const period = payrolls[0]?.periodYyyyMm || "2026-07";
+      await previredExporterService.downloadTxt(period, companyId);
+    } catch (err) {
+      setPageApiError("Error al generar archivo PreviRed");
     } finally {
       setIsExporting(false);
       setExportProgressText("");
@@ -358,6 +375,30 @@ export const PayrollsPage: React.FC = () => {
                       </span>
                       <span className="text-[10px] opacity-80">
                         Resumen con datos bancarios de pago
+                      </span>
+                    </div>
+                  </button>
+                )}
+              </MenuItem>
+
+              <MenuItem>
+                {({ focus }) => (
+                  <button
+                    type="button"
+                    onClick={handleExportPrevired}
+                    className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium transition-colors ${
+                      focus
+                        ? "bg-[#37352F] text-white"
+                        : "text-[#37352F] hover:bg-neutral-100"
+                    }`}
+                  >
+                    <DocumentTextIcon className="h-4 w-4 flex-shrink-0 text-amber-600" />
+                    <div className="text-left">
+                      <span className="block font-bold">
+                        📑 Archivo PreviRed (.TXT)
+                      </span>
+                      <span className="text-[10px] opacity-80">
+                        105 columnas para cotizaciones previsionales
                       </span>
                     </div>
                   </button>
