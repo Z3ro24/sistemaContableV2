@@ -18,6 +18,7 @@ import { ExportLogsModule } from './exports/export-logs/export-logs.module';
 import { PreviredExporterModule } from './exports/previred/previred-exporter.module';
 import { LreDtExporterModule } from './exports/lre-dt/lre-dt-exporter.module';
 import { BancosExporterModule } from './exports/bancos/bancos-exporter.module';
+import { NoveltiesModule } from './novelties/novelties.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { BancosExporterModule } from './exports/bancos/bancos-exporter.module';
     PreviredExporterModule,
     LreDtExporterModule,
     BancosExporterModule,
+    NoveltiesModule,
   ],
   controllers: [AppController],
   providers: [

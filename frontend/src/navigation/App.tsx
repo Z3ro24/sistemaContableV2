@@ -12,6 +12,7 @@ import PayrollsPage from '../pages/app/PayrollsPage';
 import LrePage from '../pages/app/LrePage';
 import PreviredPage from '../pages/app/PreviredPage';
 import BankTransfersPage from '../pages/app/BankTransfersPage';
+import NoveltiesPage from '../pages/app/NoveltiesPage';
 import PlaceholderPage from '../pages/app/PlaceholderPage';
 import NotFound from '../pages/404';
 import AppLayout from '../layouts/AppLayout';
@@ -53,16 +54,7 @@ const App = () => {
             <Route path="/payrolls/lre" element={<Navigate to="/lre" replace />} />
             <Route path="/reports/previred" element={<PreviredPage />} />
             <Route path="/reports/bank-transfers" element={<BankTransfersPage />} />
-            <Route
-              path="/hr/novelties"
-              element={
-                <PlaceholderPage
-                  title="Novedades del Mes"
-                  category="RRHH & Sueldos"
-                  description="Gestión de licencias médicas, horas extras, aguinaldos y bonos del personal."
-                />
-              }
-            />
+            <Route path="/hr/novelties" element={<NoveltiesPage />} />
             <Route
               path="/payrolls/history"
               element={

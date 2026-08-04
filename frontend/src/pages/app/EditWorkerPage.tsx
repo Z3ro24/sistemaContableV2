@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeftIcon, UserGroupIcon } from '@heroicons/react/24/outline';
+import { Save } from 'lucide-react';
+import { toast } from 'sonner';
 import workersService from '../../services/workersService';
 import companiesService from '../../services/companiesService';
 import catalogsService from '../../services/catalogsService';
@@ -108,13 +110,14 @@ export const EditWorkerPage: React.FC = () => {
     ...banks.map((b) => ({ value: b.id.toString(), label: b.name })),
   ];
 
+  // Populate form fields
   useEffect(() => {
     if (worker) {
-      setName(worker.name);
+      setName(worker.name || '');
       setPaternalLastName(worker.paternalLastName || '');
       setMaternalLastName(worker.maternalLastName || '');
-      setRut(formatRut(worker.rut));
-      setEntryDate(worker.entryDate ? worker.entryDate.split('T')[0] : '');
+      setRut(worker.rut || '');
+      setEntryDate(worker.entryDate ? new Date(worker.entryDate).toISOString().split('T')[0] : '');
       setBaseSalary(worker.baseSalary ? worker.baseSalary.toString() : '');
       setCompanyId(worker.companyId ? worker.companyId.toString() : '');
       setAfpId(worker.afpId ? worker.afpId.toString() : '');
@@ -132,11 +135,14 @@ export const EditWorkerPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['workers'] });
       queryClient.invalidateQueries({ queryKey: ['worker', workerId] });
+      toast.success('Ficha del empleado actualizada con éxito');
       navigate('/settings/workers');
     },
     onError: (err: any) => {
       const message = err.response?.data?.message || 'Error al actualizar la persona';
-      setApiError(Array.isArray(message) ? message.join(', ') : message);
+      const errorStr = Array.isArray(message) ? message.join(', ') : message;
+      setApiError(errorStr);
+      toast.error(errorStr);
     },
   });
 
@@ -163,8 +169,10 @@ export const EditWorkerPage: React.FC = () => {
       const formattedErrors = validationResult.error.format();
       if (formattedErrors.name?._errors?.[0]) {
         setApiError(formattedErrors.name._errors[0]);
+        toast.error(formattedErrors.name._errors[0]);
       } else if (formattedErrors.rut?._errors?.[0]) {
         setRutError(formattedErrors.rut._errors[0]);
+        toast.error(formattedErrors.rut._errors[0]);
       }
       return;
     }
@@ -188,70 +196,63 @@ export const EditWorkerPage: React.FC = () => {
   };
 
   if (isLoading) {
-    return (
-      <div className="p-8 text-center text-sm text-[#787774]">
-        Cargando datos de la persona...
-      </div>
-    );
+    return <div className="p-8 text-center text-sm text-[#787774]">Cargando datos de la persona...</div>;
   }
 
   if (isError || !worker) {
     return (
-      <div className="space-y-4 max-w-2xl">
-        <AlertBanner type="error" message="No se pudo encontrar la persona o no tienes permisos." />
+      <div className="space-y-4 max-w-5xl">
+        <AlertBanner type="error" message="No se pudo encontrar la persona seleccionada." />
         <button
           type="button"
           onClick={() => navigate('/settings/workers')}
-          className="flex items-center gap-2 text-xs font-semibold text-[#37352F]"
+          className="rounded-xl border border-neutral-200 bg-white px-4 py-2 text-xs font-semibold text-[#37352F] shadow-2xs hover:bg-neutral-50"
         >
-          <ArrowLeftIcon className="h-4 w-4" />
-          <span>Volver al Listado</span>
+          Volver a Personas
         </button>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 max-w-4xl selection:bg-neutral-200">
-      {/* Top Action Bar */}
-      <button
-        type="button"
-        onClick={() => navigate('/settings/workers')}
-        className="flex items-center gap-2 text-xs font-semibold text-[#787774] hover:text-[#37352F] transition-colors"
-      >
-        <ArrowLeftIcon className="h-4 w-4" />
-        <span>Volver a Personas</span>
-      </button>
+    <div className="space-y-6 max-w-5xl selection:bg-neutral-200">
+      {/* Header */}
+      <div className="flex items-center justify-between gap-4">
+        <button
+          type="button"
+          onClick={() => navigate('/settings/workers')}
+          className="flex items-center gap-2 rounded-xl border border-neutral-200/80 bg-white/80 px-3 py-1.5 text-xs font-medium text-[#37352F] shadow-2xs backdrop-blur-md hover:bg-neutral-100 transition-colors"
+        >
+          <ArrowLeftIcon className="h-4 w-4" />
+          <span>Volver a Personas</span>
+        </button>
 
-      {/* Main Edit Form Card */}
-      <div className="rounded-3xl border border-white/80 bg-white/60 p-8 shadow-[0_20px_50px_rgba(0,0,0,0.06)] ring-1 ring-white/60 backdrop-blur-3xl space-y-6">
-        <div className="flex items-center gap-4 pb-4 border-b border-neutral-200/60">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#37352F] text-white shadow-md shadow-neutral-900/10">
-            <UserGroupIcon className="h-6 w-6" />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold tracking-tight text-[#37352F]">
-              Editar Persona: {worker.name}
-            </h1>
-            <p className="text-xs text-[#787774]">
-              Modifica los detalles laborales, RUT, previsión o banco asignado.
-            </p>
-          </div>
+        <div className="flex items-center gap-2">
+          <UserGroupIcon className="h-6 w-6 text-[#37352F]" />
+          <h1 className="text-xl font-bold tracking-tight text-[#37352F]">
+            Ficha del Empleado: {worker.name}
+          </h1>
         </div>
+      </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+      {/* Main Container */}
+      <div className="rounded-3xl border border-white/80 bg-white/70 p-8 shadow-sm backdrop-blur-2xl">
+        <form onSubmit={handleSubmit} className="space-y-6">
           {apiError && <AlertBanner type="error" message={apiError} />}
 
-          {/* Section 1: Personal Data */}
+          {/* Section 1: Datos Personales */}
           <div className="space-y-3 pt-2">
             <h4 className="text-xs font-bold uppercase tracking-wider text-[#37352F] border-b border-neutral-200/60 pb-1">
               1. Datos Personales e Identificación
             </h4>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
-                <label className="block text-[11px] font-semibold text-[#787774] mb-1">Nombres *</label>
+                <label className="block text-[11px] font-semibold text-[#787774] mb-1">
+                  Nombres *
+                </label>
                 <input
                   type="text"
+                  placeholder="Ej: Juan Antonio"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs text-[#37352F] shadow-2xs focus:border-[#37352F] focus:outline-none focus:ring-1 focus:ring-[#37352F]"
@@ -259,18 +260,24 @@ export const EditWorkerPage: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="block text-[11px] font-semibold text-[#787774] mb-1">Apellido Paterno</label>
+                <label className="block text-[11px] font-semibold text-[#787774] mb-1">
+                  Apellido Paterno
+                </label>
                 <input
                   type="text"
+                  placeholder="Ej: Pérez"
                   value={paternalLastName}
                   onChange={(e) => setPaternalLastName(e.target.value)}
                   className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs text-[#37352F] shadow-2xs focus:border-[#37352F] focus:outline-none focus:ring-1 focus:ring-[#37352F]"
                 />
               </div>
               <div>
-                <label className="block text-[11px] font-semibold text-[#787774] mb-1">Apellido Materno</label>
+                <label className="block text-[11px] font-semibold text-[#787774] mb-1">
+                  Apellido Materno
+                </label>
                 <input
                   type="text"
+                  placeholder="Ej: González"
                   value={maternalLastName}
                   onChange={(e) => setMaternalLastName(e.target.value)}
                   className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs text-[#37352F] shadow-2xs focus:border-[#37352F] focus:outline-none focus:ring-1 focus:ring-[#37352F]"
@@ -278,11 +285,14 @@ export const EditWorkerPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-[11px] font-semibold text-[#787774] mb-1">RUT *</label>
+                <label className="block text-[11px] font-semibold text-[#787774] mb-1">
+                  RUT del Trabajador *
+                </label>
                 <input
                   type="text"
+                  placeholder="Ej: 19.876.543-2"
                   value={rut}
                   onChange={handleRutChange}
                   maxLength={12}
@@ -296,7 +306,9 @@ export const EditWorkerPage: React.FC = () => {
                 {rutError && <p className="mt-1 text-xs text-rose-600 font-medium">{rutError}</p>}
               </div>
               <div>
-                <label className="block text-[11px] font-semibold text-[#787774] mb-1">Empresa Asignada</label>
+                <label className="block text-[11px] font-semibold text-[#787774] mb-1">
+                  Empresa Asignada
+                </label>
                 <CustomSelect<SelectOption>
                   options={companyOptions}
                   value={companyOptions.find((o) => o.value === companyId) || companyOptions[0]}
@@ -306,14 +318,16 @@ export const EditWorkerPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Section 2: Labor & Health Data */}
-          <div className="space-y-3 pt-2">
+          {/* Section 2: Datos Contratantes y Previsionales */}
+          <div className="space-y-3 pt-3">
             <h4 className="text-xs font-bold uppercase tracking-wider text-[#37352F] border-b border-neutral-200/60 pb-1">
               2. Contrato, Previsión y Sueldo
             </h4>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
-                <label className="block text-[11px] font-semibold text-[#787774] mb-1">Fecha de Ingreso</label>
+                <label className="block text-[11px] font-semibold text-[#787774] mb-1">
+                  Fecha de Ingreso
+                </label>
                 <input
                   type="date"
                   value={entryDate}
@@ -322,16 +336,21 @@ export const EditWorkerPage: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="block text-[11px] font-semibold text-[#787774] mb-1">Sueldo Base Pactado ($)</label>
+                <label className="block text-[11px] font-semibold text-[#787774] mb-1">
+                  Sueldo Base Pactado ($)
+                </label>
                 <input
                   type="number"
+                  placeholder="Ej: 600000"
                   value={baseSalary}
                   onChange={(e) => setBaseSalary(e.target.value)}
                   className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs text-[#37352F] shadow-2xs focus:border-[#37352F] focus:outline-none focus:ring-1 focus:ring-[#37352F]"
                 />
               </div>
               <div>
-                <label className="block text-[11px] font-semibold text-[#787774] mb-1">Tipo de Contrato</label>
+                <label className="block text-[11px] font-semibold text-[#787774] mb-1">
+                  Tipo de Contrato
+                </label>
                 <CustomSelect<SelectOption>
                   options={contractOptions}
                   value={contractOptions.find((o) => o.value === contractTypeId) || contractOptions[0]}
@@ -340,9 +359,11 @@ export const EditWorkerPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
-                <label className="block text-[11px] font-semibold text-[#787774] mb-1">AFP Afiliada</label>
+                <label className="block text-[11px] font-semibold text-[#787774] mb-1">
+                  AFP Afiliada
+                </label>
                 <CustomSelect<SelectOption>
                   options={afpOptions}
                   value={afpOptions.find((o) => o.value === afpId) || afpOptions[0]}
@@ -350,7 +371,9 @@ export const EditWorkerPage: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="block text-[11px] font-semibold text-[#787774] mb-1">Institución de Salud</label>
+                <label className="block text-[11px] font-semibold text-[#787774] mb-1">
+                  Institución de Salud
+                </label>
                 <CustomSelect<SelectOption>
                   options={healthOptions}
                   value={healthOptions.find((o) => o.value === healthInstitutionId) || healthOptions[0]}
@@ -358,10 +381,13 @@ export const EditWorkerPage: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="block text-[11px] font-semibold text-[#787774] mb-1">Monto Pactado Isapre (UF)</label>
+                <label className="block text-[11px] font-semibold text-[#787774] mb-1">
+                  Monto Pactado Isapre (UF)
+                </label>
                 <input
                   type="number"
                   step="0.001"
+                  placeholder="Ej: 3.5"
                   value={healthAgreedUf}
                   onChange={(e) => setHealthAgreedUf(e.target.value)}
                   className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs text-[#37352F] shadow-2xs focus:border-[#37352F] focus:outline-none focus:ring-1 focus:ring-[#37352F]"
@@ -370,14 +396,16 @@ export const EditWorkerPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Section 3: Banking Data */}
-          <div className="space-y-3 pt-2">
+          {/* Section 3: Datos de Pago Bancario */}
+          <div className="space-y-3 pt-3">
             <h4 className="text-xs font-bold uppercase tracking-wider text-[#37352F] border-b border-neutral-200/60 pb-1">
-              3. Datos de Pago Bancario
+              3. Datos de Pago Bancario (Opcional)
             </h4>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
-                <label className="block text-[11px] font-semibold text-[#787774] mb-1">Banco Destino</label>
+                <label className="block text-[11px] font-semibold text-[#787774] mb-1">
+                  Banco Destino
+                </label>
                 <CustomSelect<SelectOption>
                   options={bankOptions}
                   value={bankOptions.find((o) => o.value === bankId) || bankOptions[0]}
@@ -385,7 +413,9 @@ export const EditWorkerPage: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="block text-[11px] font-semibold text-[#787774] mb-1">Tipo de Cuenta</label>
+                <label className="block text-[11px] font-semibold text-[#787774] mb-1">
+                  Tipo de Cuenta
+                </label>
                 <CustomSelect<SelectOption>
                   options={bankAccountTypeOptions}
                   value={bankAccountTypeOptions.find((o) => o.value === bankAccountType) || bankAccountTypeOptions[0]}
@@ -393,9 +423,12 @@ export const EditWorkerPage: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="block text-[11px] font-semibold text-[#787774] mb-1">Número de Cuenta</label>
+                <label className="block text-[11px] font-semibold text-[#787774] mb-1">
+                  Número de Cuenta
+                </label>
                 <input
                   type="text"
+                  placeholder="Ej: 19876543"
                   value={bankAccountNumber}
                   onChange={(e) => setBankAccountNumber(e.target.value)}
                   className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs text-[#37352F] shadow-2xs focus:border-[#37352F] focus:outline-none focus:ring-1 focus:ring-[#37352F]"
@@ -416,9 +449,10 @@ export const EditWorkerPage: React.FC = () => {
             <button
               type="submit"
               disabled={updateMutation.isPending}
-              className="rounded-xl bg-[#37352F] px-5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-[#201F1C] disabled:opacity-50"
+              className="flex items-center gap-2 rounded-xl bg-[#37352F] px-5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-[#201F1C] disabled:opacity-50"
             >
-              {updateMutation.isPending ? 'Guardando...' : 'Guardar Cambios'}
+              <Save className="h-4 w-4 text-emerald-400" />
+              <span>{updateMutation.isPending ? 'Guardando...' : 'Guardar Cambios'}</span>
             </button>
           </div>
         </form>

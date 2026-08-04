@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   AdjustmentsHorizontalIcon,
-  PlusIcon,
   TrashIcon,
   CalendarIcon,
   InformationCircleIcon,
@@ -15,6 +14,8 @@ import {
 import monthlyParametersService from '../../services/monthlyParametersService';
 import catalogsService from '../../services/catalogsService';
 import AlertBanner from '../../components/common/AlertBanner';
+import { Save } from 'lucide-react';
+import { toast } from 'sonner';
 
 // Default SII Tax Brackets (Chile)
 const defaultTaxBrackets = [
@@ -130,11 +131,14 @@ export const MonthlyParametersPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['monthlyParameters'] });
       setSuccessMsg(`Parámetros configurados correctamente para el período ${periodYyyyMm}`);
+      toast.success(`Parámetros configurados correctamente para el período ${periodYyyyMm}`);
       setApiError(null);
     },
     onError: (err: any) => {
       const message = err.response?.data?.message || 'Error al guardar los parámetros mensuales';
-      setApiError(Array.isArray(message) ? message.join(', ') : message);
+      const errorStr = Array.isArray(message) ? message.join(', ') : message;
+      setApiError(errorStr);
+      toast.error(errorStr);
       setSuccessMsg(null);
     },
   });
@@ -467,7 +471,7 @@ export const MonthlyParametersPage: React.FC = () => {
                 disabled={createMutation.isPending}
                 className="flex items-center gap-1.5 rounded-xl bg-[#37352F] px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-[#201F1C] disabled:opacity-50"
               >
-                <PlusIcon className="h-4 w-4" />
+                <Save className="h-4 w-4 text-emerald-400" />
                 <span>{createMutation.isPending ? 'Guardando...' : 'Guardar Parámetros'}</span>
               </button>
             </div>

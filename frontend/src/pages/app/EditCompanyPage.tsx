@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeftIcon, BuildingOfficeIcon } from '@heroicons/react/24/outline';
+import { Save } from 'lucide-react';
+import { toast } from 'sonner';
 import companiesService from '../../services/companiesService';
 import { formatRut, validateRut } from '../../utils/rutUtils';
 import { companySchema } from '../../validators/companyValidator';
@@ -41,11 +43,14 @@ export const EditCompanyPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['companies'] });
       queryClient.invalidateQueries({ queryKey: ['company', companyId] });
+      toast.success('Empresa actualizada con éxito');
       navigate('/settings/companies');
     },
     onError: (err: any) => {
       const message = err.response?.data?.message || 'Error al actualizar la empresa';
-      setApiError(Array.isArray(message) ? message.join(', ') : message);
+      const errorStr = Array.isArray(message) ? message.join(', ') : message;
+      setApiError(errorStr);
+      toast.error(errorStr);
     },
   });
 
@@ -71,8 +76,10 @@ export const EditCompanyPage: React.FC = () => {
       const formattedErrors = validationResult.error.format();
       if (formattedErrors.name?._errors?.[0]) {
         setApiError(formattedErrors.name._errors[0]);
+        toast.error(formattedErrors.name._errors[0]);
       } else if (formattedErrors.rutCompany?._errors?.[0]) {
         setRutError(formattedErrors.rutCompany._errors[0]);
+        toast.error(formattedErrors.rutCompany._errors[0]);
       }
       return;
     }
@@ -198,9 +205,10 @@ export const EditCompanyPage: React.FC = () => {
             <button
               type="submit"
               disabled={updateMutation.isPending}
-              className="rounded-xl bg-[#37352F] px-5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-[#201F1C] disabled:opacity-50"
+              className="flex items-center gap-2 rounded-xl bg-[#37352F] px-5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-[#201F1C] disabled:opacity-50"
             >
-              {updateMutation.isPending ? 'Guardando...' : 'Guardar Cambios'}
+              <Save className="h-4 w-4 text-emerald-400" />
+              <span>{updateMutation.isPending ? 'Guardando...' : 'Guardar Cambios'}</span>
             </button>
           </div>
         </form>

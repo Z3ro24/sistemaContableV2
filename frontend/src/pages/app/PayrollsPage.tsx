@@ -22,6 +22,8 @@ import AlertBanner from "../../components/common/AlertBanner";
 import PayrollPdfModal from "../../components/modals/PayrollPdfModal";
 import BankPayrollModal from "../../components/modals/BankPayrollModal";
 import previredExporterService from "../../services/previredExporterService";
+import { Save } from "lucide-react";
+import { toast } from "sonner";
 import {
   exportPaymentCsv,
   generateUnifiedPdf,
@@ -47,13 +49,6 @@ export const PayrollsPage: React.FC = () => {
   // Form state
   const [workerId, setWorkerId] = useState("");
   const [periodYyyyMm, setPeriodYyyyMm] = useState("2026-07");
-  const [workedDays, setWorkedDays] = useState("30");
-  const [overtime50Hrs, setOvertime50Hrs] = useState("0");
-  const [overtime100Hrs, setOvertime100Hrs] = useState("0");
-  const [familyDependentsCount, setFamilyDependentsCount] = useState("0");
-  const [otherTaxableIncome, setOtherTaxableIncome] = useState("0");
-  const [otherNonTaxableIncome, setOtherNonTaxableIncome] = useState("0");
-  const [otherDeductions, setOtherDeductions] = useState("0");
 
   // Separated Error States
   const [pageApiError, setPageApiError] = useState<string | null>(null);
@@ -169,12 +164,15 @@ export const PayrollsPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ["payrolls"] });
       setIsCalcModalOpen(false);
       setModalApiError(null);
+      toast.success("Liquidación calculada y guardada exitosamente");
       setPdfModalPayroll(data);
     },
     onError: (err: any) => {
       const message =
         err.response?.data?.message || "Error al calcular la liquidación";
-      setModalApiError(Array.isArray(message) ? message.join(", ") : message);
+      const errorStr = Array.isArray(message) ? message.join(", ") : message;
+      setModalApiError(errorStr);
+      toast.error(errorStr);
     },
   });
 
@@ -182,11 +180,14 @@ export const PayrollsPage: React.FC = () => {
     mutationFn: payrollsService.delete,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["payrolls"] });
+      toast.success("Liquidación eliminada exitosamente");
     },
     onError: (err: any) => {
       const message =
         err.response?.data?.message || "Error al eliminar la liquidación";
-      setPageApiError(Array.isArray(message) ? message.join(", ") : message);
+      const errorStr = Array.isArray(message) ? message.join(", ") : message;
+      setPageApiError(errorStr);
+      toast.error(errorStr);
     },
   });
 
@@ -202,13 +203,6 @@ export const PayrollsPage: React.FC = () => {
     calculateMutation.mutate({
       workerId: parseInt(workerId, 10),
       periodYyyyMm,
-      workedDays: parseInt(workedDays, 10) || 30,
-      overtime50Hrs: parseFloat(overtime50Hrs) || 0,
-      overtime100Hrs: parseFloat(overtime100Hrs) || 0,
-      familyDependentsCount: parseInt(familyDependentsCount, 10) || 0,
-      otherTaxableIncome: parseFloat(otherTaxableIncome) || 0,
-      otherNonTaxableIncome: parseFloat(otherNonTaxableIncome) || 0,
-      otherDeductions: parseFloat(otherDeductions) || 0,
     });
   };
 
@@ -576,97 +570,12 @@ export const PayrollsPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Grid Row 2: Días Trabajados, Horas 50%, Horas 100% */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4.5 items-end">
-                <div className="flex flex-col">
-                  <label className="h-5 flex items-center mb-1 text-xs font-semibold uppercase tracking-wider text-[#787774]">
-                    Días Trabajados (Max 30)
-                  </label>
-                  <input
-                    type="number"
-                    max={30}
-                    min={0}
-                    value={workedDays}
-                    onChange={(e) => setWorkedDays(e.target.value)}
-                    className="h-[38px] w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs text-[#37352F] shadow-2xs focus:border-[#37352F] focus:outline-none focus:ring-1 focus:ring-[#37352F]"
-                  />
-                </div>
-                <div className="flex flex-col">
-                  <label className="h-5 flex items-center mb-1 text-xs font-semibold uppercase tracking-wider text-[#787774]">
-                    Horas Extras 50%
-                  </label>
-                  <input
-                    type="number"
-                    step="0.5"
-                    value={overtime50Hrs}
-                    onChange={(e) => setOvertime50Hrs(e.target.value)}
-                    className="h-[38px] w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs text-[#37352F] shadow-2xs focus:border-[#37352F] focus:outline-none focus:ring-1 focus:ring-[#37352F]"
-                  />
-                </div>
-                <div className="flex flex-col">
-                  <label className="h-5 flex items-center mb-1 text-xs font-semibold uppercase tracking-wider text-[#787774]">
-                    Horas Extras 100%
-                  </label>
-                  <input
-                    type="number"
-                    step="0.5"
-                    value={overtime100Hrs}
-                    onChange={(e) => setOvertime100Hrs(e.target.value)}
-                    className="h-[38px] w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs text-[#37352F] shadow-2xs focus:border-[#37352F] focus:outline-none focus:ring-1 focus:ring-[#37352F]"
-                  />
-                </div>
-              </div>
-
-              {/* Grid Row 3: Cargas Familares, Otros Imponibles, Haberes No Imponibles */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4.5 items-end">
-                <div className="flex flex-col">
-                  <label className="h-5 flex items-center mb-1 text-xs font-semibold uppercase tracking-wider text-[#787774]">
-                    Cargas Familiares
-                  </label>
-                  <input
-                    type="number"
-                    value={familyDependentsCount}
-                    onChange={(e) => setFamilyDependentsCount(e.target.value)}
-                    className="h-[38px] w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs text-[#37352F] shadow-2xs focus:border-[#37352F] focus:outline-none focus:ring-1 focus:ring-[#37352F]"
-                  />
-                </div>
-                <div className="flex flex-col">
-                  <label className="h-5 flex items-center mb-1 text-[11px] font-semibold uppercase tracking-wider text-[#787774]">
-                    Otros Imponibles ($)
-                  </label>
-                  <input
-                    type="number"
-                    value={otherTaxableIncome}
-                    onChange={(e) => setOtherTaxableIncome(e.target.value)}
-                    className="h-[38px] w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs text-[#37352F] shadow-2xs focus:border-[#37352F] focus:outline-none focus:ring-1 focus:ring-[#37352F]"
-                  />
-                </div>
-                <div className="flex flex-col">
-                  <label className="h-5 flex items-center mb-1 text-[11px] font-semibold uppercase tracking-wider text-[#787774]">
-                    No Imponibles ($)
-                  </label>
-                  <input
-                    type="number"
-                    value={otherNonTaxableIncome}
-                    onChange={(e) => setOtherNonTaxableIncome(e.target.value)}
-                    className="h-[38px] w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs text-[#37352F] shadow-2xs focus:border-[#37352F] focus:outline-none focus:ring-1 focus:ring-[#37352F]"
-                  />
-                </div>
-              </div>
-
-              {/* Grid Row 4: Otros Descuentos */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4.5 items-end">
-                <div className="flex flex-col">
-                  <label className="h-5 flex items-center mb-1 text-[11px] font-semibold uppercase tracking-wider text-[#787774]">
-                    Otros Descuentos ($)
-                  </label>
-                  <input
-                    type="number"
-                    value={otherDeductions}
-                    onChange={(e) => setOtherDeductions(e.target.value)}
-                    className="h-[38px] w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs text-[#37352F] shadow-2xs focus:border-[#37352F] focus:outline-none focus:ring-1 focus:ring-[#37352F]"
-                  />
-                </div>
+              {/* Informative Banner */}
+              <div className="rounded-2xl border border-blue-200 bg-blue-50/80 p-3.5 text-xs text-blue-950 flex items-start gap-2.5 shadow-2xs">
+                <span className="text-base leading-none">ℹ️</span>
+                <span>
+                  Los haberes impositivos, licencias médicas, horas extras y bonos se cargarán automáticamente desde la sección <strong>Novedades del Mes</strong> para el período {periodYyyyMm}.
+                </span>
               </div>
 
               {/* Form Actions */}
@@ -681,11 +590,14 @@ export const PayrollsPage: React.FC = () => {
                 <button
                   type="submit"
                   disabled={calculateMutation.isPending}
-                  className="rounded-xl bg-[#37352F] px-5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-[#201F1C] disabled:opacity-50"
+                  className="flex items-center gap-2 rounded-xl bg-[#37352F] px-5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-[#201F1C] disabled:opacity-50"
                 >
-                  {calculateMutation.isPending
-                    ? "Calculando..."
-                    : "Calcular y Guardar"}
+                  <Save className="h-4 w-4 text-emerald-400" />
+                  <span>
+                    {calculateMutation.isPending
+                      ? "Calculando..."
+                      : "Calcular y Guardar"}
+                  </span>
                 </button>
               </div>
             </form>

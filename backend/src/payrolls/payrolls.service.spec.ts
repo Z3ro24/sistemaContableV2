@@ -74,6 +74,7 @@ describe('PayrollsService', () => {
       }),
     },
     monthlyNovelty: {
+      findUnique: jest.fn().mockResolvedValue(null),
       upsert: jest.fn().mockResolvedValue({ id: 1 }),
     },
     payroll: {

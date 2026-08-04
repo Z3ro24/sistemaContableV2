@@ -42,20 +42,35 @@ export class PayrollsService {
       );
     }
 
+    // 2.b Fetch pre-saved Monthly Novelties from DB (if any)
+    const existingNovelty = await this.prisma.monthlyNovelty.findUnique({
+      where: {
+        workerId_periodYyyyMm: {
+          workerId: worker.id,
+          periodYyyyMm: dto.periodYyyyMm,
+        },
+      },
+    });
+
+    const workedDays = dto.workedDays ?? existingNovelty?.workedDays ?? 30;
+    const sickLeaveDays = dto.sickLeaveDays ?? existingNovelty?.sickLeaveDays ?? 0;
+    const absenceDays = dto.absenceDays ?? existingNovelty?.absenceDays ?? 0;
+    const overtime50Hrs = dto.overtime50Hrs ?? (existingNovelty ? Number(existingNovelty.overtime50Hrs) : 0);
+    const overtime100Hrs = dto.overtime100Hrs ?? (existingNovelty ? Number(existingNovelty.overtime100Hrs) : 0);
+    const familyDependentsCount = dto.familyDependentsCount ?? existingNovelty?.familyDependentsCount ?? 0;
+    const otherTaxableIncome = dto.otherTaxableIncome ?? (existingNovelty ? Number(existingNovelty.otherTaxableIncome) : 0);
+    const otherNonTaxableIncome = dto.otherNonTaxableIncome ?? (existingNovelty ? Number(existingNovelty.otherNonTaxableIncome) : 0);
+    const totalOtherDeductions = dto.otherDeductions ?? (existingNovelty ? Number(existingNovelty.otherDeductions) : 0);
+
     // 3. Imponibles Math
     const baseSalaryAgreed = Number(worker.baseSalary) || 0;
-    const workedDays = dto.workedDays ?? 30;
     const proportionalBaseSalary = Math.round((baseSalaryAgreed / 30) * workedDays);
-
-    const overtime50Hrs = dto.overtime50Hrs || 0;
-    const overtime100Hrs = dto.overtime100Hrs || 0;
 
     // Hourly rate approx: Base Salary / 180
     const hourlyRate = baseSalaryAgreed / 180;
     const overtime50Amount = Math.round(hourlyRate * 1.5 * overtime50Hrs);
     const overtime100Amount = Math.round(hourlyRate * 2.0 * overtime100Hrs);
 
-    const otherTaxableIncome = dto.otherTaxableIncome || 0;
     const totalTaxable = proportionalBaseSalary + overtime50Amount + overtime100Amount + otherTaxableIncome;
 
     // 4. Legal Deductions Math
@@ -102,7 +117,6 @@ export class PayrollsService {
     const totalLegalDeductions = afpDeduction + healthDeduction + afcDeduction + uniqueTaxDeduction;
 
     // 5. Non-Taxable Income Math
-    const familyDependentsCount = dto.familyDependentsCount || 0;
     const familyBracket = param.familyAllowanceBrackets.find((f) => {
       const from = Number(f.incomeFrom);
       const to = Number(f.incomeTo);
@@ -110,11 +124,9 @@ export class PayrollsService {
     });
 
     const familyAllowanceAmount = familyDependentsCount * (familyBracket ? Number(familyBracket.amountPerDependent) : 0);
-    const otherNonTaxableIncome = dto.otherNonTaxableIncome || 0;
     const totalNonTaxable = familyAllowanceAmount + otherNonTaxableIncome;
 
     // 6. Other Deductions & Net Salary
-    const totalOtherDeductions = dto.otherDeductions || 0;
     const netPayable = totalTaxable + totalNonTaxable - totalLegalDeductions - totalOtherDeductions;
 
     // 7. Save Monthly Novelty
@@ -127,8 +139,8 @@ export class PayrollsService {
       },
       update: {
         workedDays,
-        sickLeaveDays: dto.sickLeaveDays || 0,
-        absenceDays: dto.absenceDays || 0,
+        sickLeaveDays,
+        absenceDays,
         overtime50Hrs,
         overtime100Hrs,
         familyDependentsCount,
@@ -140,8 +152,8 @@ export class PayrollsService {
         workerId: worker.id,
         periodYyyyMm: dto.periodYyyyMm,
         workedDays,
-        sickLeaveDays: dto.sickLeaveDays || 0,
-        absenceDays: dto.absenceDays || 0,
+        sickLeaveDays,
+        absenceDays,
         overtime50Hrs,
         overtime100Hrs,
         familyDependentsCount,

@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Dialog, DialogPanel, DialogTitle } from '@headlessui/react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { XMarkIcon, BuildingOfficeIcon } from '@heroicons/react/24/outline';
+import { Save } from 'lucide-react';
+import { toast } from 'sonner';
 import companiesService from '../../services/companiesService';
 import { formatRut, validateRut } from '../../utils/rutUtils';
 import { companySchema } from '../../validators/companyValidator';
@@ -25,11 +27,14 @@ export const CompanyModal: React.FC<CompanyModalProps> = ({ isOpen, onClose }) =
     mutationFn: companiesService.create,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['companies'] });
+      toast.success('Empresa guardada exitosamente');
       handleClose();
     },
     onError: (err: any) => {
       const message = err.response?.data?.message || 'Error al crear la empresa';
-      setApiError(Array.isArray(message) ? message.join(', ') : message);
+      const errorStr = Array.isArray(message) ? message.join(', ') : message;
+      setApiError(errorStr);
+      toast.error(errorStr);
     },
   });
 
@@ -64,8 +69,10 @@ export const CompanyModal: React.FC<CompanyModalProps> = ({ isOpen, onClose }) =
       const formattedErrors = validationResult.error.format();
       if (formattedErrors.name?._errors?.[0]) {
         setApiError(formattedErrors.name._errors[0]);
+        toast.error(formattedErrors.name._errors[0]);
       } else if (formattedErrors.rutCompany?._errors?.[0]) {
         setRutError(formattedErrors.rutCompany._errors[0]);
+        toast.error(formattedErrors.rutCompany._errors[0]);
       }
       return;
     }
@@ -168,9 +175,10 @@ export const CompanyModal: React.FC<CompanyModalProps> = ({ isOpen, onClose }) =
               <button
                 type="submit"
                 disabled={createMutation.isPending}
-                className="rounded-xl bg-[#37352F] px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-[#201F1C] disabled:opacity-50"
+                className="flex items-center gap-2 rounded-xl bg-[#37352F] px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-[#201F1C] disabled:opacity-50"
               >
-                {createMutation.isPending ? 'Guardando...' : 'Guardar Empresa'}
+                <Save className="h-4 w-4 text-emerald-400" />
+                <span>{createMutation.isPending ? 'Guardando...' : 'Guardar Empresa'}</span>
               </button>
             </div>
           </form>
