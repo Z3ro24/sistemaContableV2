@@ -1,6 +1,6 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import React, { useState, useMemo, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   UserGroupIcon,
   PlusIcon,
@@ -10,14 +10,14 @@ import {
   MagnifyingGlassIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
-} from '@heroicons/react/24/outline';
-import { toast } from 'sonner';
-import workersService from '../../services/workersService';
-import WorkerModal from '../../components/modals/WorkerModal';
-import AlertBanner from '../../components/common/AlertBanner';
-import { cleanRut } from '../../utils/rutUtils';
-import { useAppSelector } from '../../store/store';
-import { Button } from '../../components/ui/button';
+} from "@heroicons/react/24/outline";
+import { toast } from "sonner";
+import workersService from "../../services/workersService";
+import WorkerModal from "../../components/modals/WorkerModal";
+import AlertBanner from "../../components/common/AlertBanner";
+import { cleanRut } from "../../utils/rutUtils";
+import { useAppSelector } from "../../store/store";
+import { Button } from "../../components/ui/button";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -27,37 +27,47 @@ import {
   AlertDialogFooter,
   AlertDialogCancel,
   AlertDialogAction,
-} from '../../components/ui/alert-dialog';
+} from "../../components/ui/alert-dialog";
 
 const ITEMS_PER_PAGE = 10;
 
 export const WorkersPage: React.FC = () => {
-  const selectedCompanyId = useAppSelector((state) => state.company.selectedCompanyId);
+  const selectedCompanyId = useAppSelector(
+    (state) => state.company.selectedCompanyId,
+  );
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [apiError, setApiError] = useState<string | null>(null);
-  const [deletingWorker, setDeletingWorker] = useState<{ id: number; name: string } | null>(null);
+  const [deletingWorker, setDeletingWorker] = useState<{
+    id: number;
+    name: string;
+  } | null>(null);
 
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   // Fetch workers
-  const { data: workers = [], isLoading, isError } = useQuery({
-    queryKey: ['workers'],
+  const {
+    data: workers = [],
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: ["workers"],
     queryFn: workersService.getAll,
   });
 
   const deleteMutation = useMutation({
     mutationFn: workersService.delete,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['workers'] });
-      toast.success('Empleado eliminado correctamente');
+      queryClient.invalidateQueries({ queryKey: ["workers"] });
+      toast.success("Empleado eliminado correctamente");
       setDeletingWorker(null);
     },
     onError: (err: any) => {
-      const message = err.response?.data?.message || 'Error al eliminar la persona';
-      const formatted = Array.isArray(message) ? message.join(', ') : message;
+      const message =
+        err.response?.data?.message || "Error al eliminar la persona";
+      const formatted = Array.isArray(message) ? message.join(", ") : message;
       setApiError(formatted);
       toast.error(formatted);
       setDeletingWorker(null);
@@ -65,9 +75,9 @@ export const WorkersPage: React.FC = () => {
   });
 
   // Reset to page 1 on search or filter change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery, selectedCompanyId]);
+  // useEffect(() => {
+  //   setCurrentPage(1);
+  // }, [searchQuery, selectedCompanyId]);
 
   // Filtered workers logic
   const filteredWorkers = useMemo(() => {
@@ -82,9 +92,9 @@ export const WorkersPage: React.FC = () => {
         (cleanedQuery && cleanRut(worker.rut).includes(cleanedQuery));
 
       let matchesCompany = true;
-      if (selectedCompanyId === 'unassigned') {
+      if (selectedCompanyId === "unassigned") {
         matchesCompany = !worker.companyId;
-      } else if (selectedCompanyId && selectedCompanyId !== 'all') {
+      } else if (selectedCompanyId && selectedCompanyId !== "all") {
         matchesCompany = worker.companyId === parseInt(selectedCompanyId, 10);
       }
 
@@ -165,8 +175,8 @@ export const WorkersPage: React.FC = () => {
         {!isLoading && !isError && filteredWorkers.length === 0 && (
           <div className="p-12 text-center text-xs text-[#787774]">
             {searchQuery
-              ? 'No se encontraron empleados que coincidan con la búsqueda.'
-              : 'No hay empleados registrados en esta empresa.'}
+              ? "No se encontraron empleados que coincidan con la búsqueda."
+              : "No hay empleados registrados en esta empresa."}
           </div>
         )}
 
@@ -201,7 +211,9 @@ export const WorkersPage: React.FC = () => {
                           <span>{worker.company.name}</span>
                         </div>
                       ) : (
-                        <span className="italic text-neutral-400">Sin Asignar</span>
+                        <span className="italic text-neutral-400">
+                          Sin Asignar
+                        </span>
                       )}
                     </td>
                     <td className="px-4 py-3 text-right">
@@ -218,7 +230,12 @@ export const WorkersPage: React.FC = () => {
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => setDeletingWorker({ id: worker.id, name: worker.name })}
+                          onClick={() =>
+                            setDeletingWorker({
+                              id: worker.id,
+                              name: worker.name,
+                            })
+                          }
                           title="Eliminar Empleado"
                           className="h-8 w-8 text-rose-600 hover:text-rose-700 hover:bg-rose-50"
                         >
@@ -237,7 +254,8 @@ export const WorkersPage: React.FC = () => {
         {!isLoading && !isError && totalPages > 1 && (
           <div className="flex items-center justify-between pt-2">
             <span className="text-[11px] text-[#787774]">
-              Página {currentPage} de {totalPages} ({filteredWorkers.length} empleados)
+              Página {currentPage} de {totalPages} ({filteredWorkers.length}{" "}
+              empleados)
             </span>
 
             <div className="flex items-center gap-2">
@@ -254,7 +272,9 @@ export const WorkersPage: React.FC = () => {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                onClick={() =>
+                  setCurrentPage((p) => Math.min(totalPages, p + 1))
+                }
                 disabled={currentPage === totalPages}
                 className="h-8 text-xs font-semibold"
               >
@@ -278,8 +298,9 @@ export const WorkersPage: React.FC = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>¿Confirmar eliminación?</AlertDialogTitle>
             <AlertDialogDescription>
-              ¿Estás seguro de que deseas eliminar permanentemente a{' '}
-              <strong className="text-[#37352F]">{deletingWorker?.name}</strong>? Esta acción no se puede deshacer.
+              ¿Estás seguro de que deseas eliminar permanentemente a{" "}
+              <strong className="text-[#37352F]">{deletingWorker?.name}</strong>
+              ? Esta acción no se puede deshacer.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -290,7 +311,7 @@ export const WorkersPage: React.FC = () => {
               onClick={confirmDelete}
               disabled={deleteMutation.isPending}
             >
-              {deleteMutation.isPending ? 'Eliminando...' : 'Sí, Eliminar'}
+              {deleteMutation.isPending ? "Eliminando..." : "Sí, Eliminar"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

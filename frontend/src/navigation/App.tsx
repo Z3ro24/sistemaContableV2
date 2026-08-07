@@ -223,6 +223,14 @@ const App = () => {
             />
             <Route path="/workers" element={<WorkersPage />} />
             <Route
+              path="/workers/:id/edit"
+              element={<EditWorkerPage />}
+            />
+            <Route
+              path="/workers/edit/:id"
+              element={<EditWorkerPage />}
+            />
+            <Route
               path="/settings/workers/edit/:id"
               element={<EditWorkerPage />}
             />

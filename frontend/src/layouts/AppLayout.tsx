@@ -1,6 +1,6 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
-import { Toaster } from 'sonner';
+import { Toaster } from '../components/ui/sonner';
 import AppSidebar from '../components/layout/AppSidebar';
 import Navbar from '../components/layout/Navbar';
 import Breadcrumbs from '../components/common/Breadcrumbs';
