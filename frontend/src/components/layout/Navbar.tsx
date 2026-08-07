@@ -16,6 +16,7 @@ import { useAppDispatch, useAppSelector } from '../../store/store';
 import { setSelectedCompanyId } from '../../store/slices/company.slice';
 import { logout } from '../../store/slices/auth.slice';
 import { Button } from '../ui/button';
+import { SidebarTrigger } from '../ui/sidebar';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -25,7 +26,11 @@ import {
   DropdownMenuSeparator,
 } from '../ui/dropdown-menu';
 
-export const Navbar: React.FC = () => {
+export interface NavbarProps {
+  onToggleMobileMenu?: () => void;
+}
+
+export const Navbar: React.FC<NavbarProps> = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const selectedCompanyId = useAppSelector((state) => state.company.selectedCompanyId);
@@ -67,9 +72,11 @@ export const Navbar: React.FC = () => {
 
   return (
     <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-neutral-200/80 bg-white/80 px-4 sm:px-8 shadow-2xs backdrop-blur-2xl transition-all">
-      {/* Left: Active Company Context & Selector */}
+      {/* Left: Sidebar Toggle & Active Company Selector */}
       <div className="flex items-center gap-3">
-        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#37352F] text-white shadow-xs">
+        <SidebarTrigger />
+
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#37352F] text-white shadow-xs shrink-0">
           <Building2 className="h-5 w-5 text-amber-400" />
         </div>
 

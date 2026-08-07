@@ -1,23 +1,23 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
-import LoginPage from '../pages/auth/LoginPage';
-import RegisterPage from '../pages/auth/RegisterPage';
-import HomePage from '../pages/app/HomePage';
-import ProfilePage from '../pages/app/ProfilePage';
-import WorkersPage from '../pages/app/WorkersPage';
-import EditWorkerPage from '../pages/app/EditWorkerPage';
-import CompaniesPage from '../pages/app/CompaniesPage';
-import EditCompanyPage from '../pages/app/EditCompanyPage';
-import MonthlyParametersPage from '../pages/app/MonthlyParametersPage';
-import PayrollsPage from '../pages/app/PayrollsPage';
-import LrePage from '../pages/app/LrePage';
-import PreviredPage from '../pages/app/PreviredPage';
-import BankTransfersPage from '../pages/app/BankTransfersPage';
-import NoveltiesPage from '../pages/app/NoveltiesPage';
-import PlaceholderPage from '../pages/app/PlaceholderPage';
-import NotFound from '../pages/404';
-import AppLayout from '../layouts/AppLayout';
-import { useAuthInit } from '../hooks/useAuthInit';
-import { useAppSelector } from '../store/store';
+import { Routes, Route, Navigate } from "react-router-dom";
+import LoginPage from "../pages/auth/LoginPage";
+import RegisterPage from "../pages/auth/RegisterPage";
+import HomePage from "../pages/app/HomePage";
+import ProfilePage from "../pages/app/ProfilePage";
+import WorkersPage from "../pages/app/WorkersPage";
+import EditWorkerPage from "../pages/app/EditWorkerPage";
+import CompaniesPage from "../pages/app/CompaniesPage";
+import EditCompanyPage from "../pages/app/EditCompanyPage";
+import MonthlyParametersPage from "../pages/app/MonthlyParametersPage";
+import PayrollsPage from "../pages/app/PayrollsPage";
+import LrePage from "../pages/app/LrePage";
+import PreviredPage from "../pages/app/PreviredPage";
+import BankTransfersPage from "../pages/app/BankTransfersPage";
+import NoveltiesPage from "../pages/app/NoveltiesPage";
+import PlaceholderPage from "../pages/app/PlaceholderPage";
+import NotFound from "../pages/404";
+import AppLayout from "../layouts/AppLayout";
+import { useAuthInit } from "../hooks/useAuthInit";
+import { useAppSelector } from "../store/store";
 
 const App = () => {
   const { isLoading } = useAuthInit();
@@ -51,10 +51,16 @@ const App = () => {
             {/* 👥 Recursos Humanos & Sueldos */}
             <Route path="/payrolls" element={<PayrollsPage />} />
             <Route path="/lre" element={<LrePage />} />
-            <Route path="/payrolls/lre" element={<Navigate to="/lre" replace />} />
+            <Route
+              path="/payrolls/lre"
+              element={<Navigate to="/lre" replace />}
+            />
             <Route path="/reports/previred" element={<PreviredPage />} />
-            <Route path="/reports/bank-transfers" element={<BankTransfersPage />} />
-            <Route path="/hr/novelties" element={<NoveltiesPage />} />
+            <Route
+              path="/reports/bank-transfers"
+              element={<BankTransfersPage />}
+            />
+            <Route path="/novelties" element={<NoveltiesPage />} />
             <Route
               path="/payrolls/history"
               element={
@@ -211,12 +217,24 @@ const App = () => {
             />
 
             {/* ⚙️ Configuración & Sistema */}
-            <Route path="/settings" element={<Navigate to="/settings/workers" replace />} />
+            <Route
+              path="/settings"
+              element={<Navigate to="/settings/workers" replace />}
+            />
             <Route path="/settings/workers" element={<WorkersPage />} />
-            <Route path="/settings/workers/edit/:id" element={<EditWorkerPage />} />
+            <Route
+              path="/settings/workers/edit/:id"
+              element={<EditWorkerPage />}
+            />
             <Route path="/settings/companies" element={<CompaniesPage />} />
-            <Route path="/settings/companies/edit/:id" element={<EditCompanyPage />} />
-            <Route path="/settings/parameters" element={<MonthlyParametersPage />} />
+            <Route
+              path="/settings/companies/edit/:id"
+              element={<EditCompanyPage />}
+            />
+            <Route
+              path="/settings/parameters"
+              element={<MonthlyParametersPage />}
+            />
             <Route
               path="/settings/sii-certificate"
               element={
