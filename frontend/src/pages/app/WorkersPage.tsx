@@ -74,10 +74,10 @@ export const WorkersPage: React.FC = () => {
     },
   });
 
-  // Reset to page 1 on search or filter change
-  // useEffect(() => {
-  //   setCurrentPage(1);
-  // }, [searchQuery, selectedCompanyId]);
+  //Reset to page 1 on search or filter change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedCompanyId]);
 
   // Filtered workers logic
   const filteredWorkers = useMemo(() => {
