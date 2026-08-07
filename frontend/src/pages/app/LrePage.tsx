@@ -6,26 +6,14 @@ import {
   DocumentCheckIcon,
 } from '@heroicons/react/24/outline';
 import lreService from '../../services/lreService';
-import companiesService from '../../services/companiesService';
-import CustomSelect from '../../components/common/CustomSelect';
 import AlertBanner from '../../components/common/AlertBanner';
 import ExportHistoryTable from '../../components/common/ExportHistoryTable';
-
-interface SelectOption {
-  value: string;
-  label: string;
-}
+import { useAppSelector } from '../../store/store';
 
 export const LrePage: React.FC = () => {
   const [periodYyyyMm, setPeriodYyyyMm] = useState('2026-07');
-  const [filterCompanyId, setFilterCompanyId] = useState('all');
   const [isExporting, setIsExporting] = useState(false);
-
-  // Fetch Companies for filter
-  const { data: companies = [] } = useQuery({
-    queryKey: ['companies'],
-    queryFn: companiesService.getAll,
-  });
+  const filterCompanyId = useAppSelector((state) => state.company.selectedCompanyId);
 
   const parsedCompanyId = filterCompanyId !== 'all' ? parseInt(filterCompanyId, 10) : undefined;
 
@@ -34,11 +22,6 @@ export const LrePage: React.FC = () => {
     queryKey: ['lreReport', periodYyyyMm, filterCompanyId],
     queryFn: () => lreService.getReport(periodYyyyMm, parsedCompanyId),
   });
-
-  const filterCompanyOptions: SelectOption[] = [
-    { value: 'all', label: 'Todas las Empresas' },
-    ...companies.map((c) => ({ value: c.id.toString(), label: c.name })),
-  ];
 
   const handleDownloadCsv = async () => {
     if (!lreReport || lreReport.records.length === 0) return;
@@ -61,14 +44,14 @@ export const LrePage: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-3xl border border-white/80 bg-white/60 p-8 shadow-[0_20px_50px_rgba(0,0,0,0.06)] ring-1 ring-white/60 backdrop-blur-3xl">
         <div className="flex items-center gap-4">
           <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#37352F] text-white shadow-md shadow-neutral-900/10">
-            <TableCellsIcon className="h-7 w-7" />
+            <TableCellsIcon className="h-7 w-7 text-[#787774]" />
           </div>
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-[#37352F]">
-              Libro de Remuneraciones Electrónico (LRE)
+              Libro de Remuneraciones (LRE)
             </h1>
             <p className="text-xs text-[#787774]">
-              Exportador estandarizado de remuneraciones exigido por la Dirección del Trabajo (DT Chile - Res. Ex. Nº 39).
+              Reporte oficial para la Dirección del Trabajo (DT Chile) compatible con formato CSV de 45 campos.
             </p>
           </div>
         </div>
@@ -85,18 +68,7 @@ export const LrePage: React.FC = () => {
       </div>
 
       {/* Filter Bar */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
-        <div className="w-full sm:w-64">
-          <label className="text-[10px] font-bold uppercase tracking-wider text-[#787774] block mb-1">
-            Empresa
-          </label>
-          <CustomSelect<SelectOption>
-            options={filterCompanyOptions}
-            value={filterCompanyOptions.find((o) => o.value === filterCompanyId) || filterCompanyOptions[0]}
-            onChange={(opt) => setFilterCompanyId(opt?.value || 'all')}
-          />
-        </div>
-
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-start gap-4">
         <div className="w-full sm:w-44">
           <label className="text-[10px] font-bold uppercase tracking-wider text-[#787774] block mb-1">
             Período (YYYY-MM)
@@ -110,105 +82,105 @@ export const LrePage: React.FC = () => {
         </div>
       </div>
 
-      {/* Metrics Summary Cards */}
-      {lreReport && lreReport.records.length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <div className="rounded-2xl border border-white/80 bg-white/60 p-4 shadow-2xs backdrop-blur-2xl space-y-1">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-[#787774]">Registros DT</span>
-            <p className="text-xl font-bold text-[#37352F]">{lreReport.totalWorkers} Trabajador(es)</p>
-          </div>
-          <div className="rounded-2xl border border-white/80 bg-white/60 p-4 shadow-2xs backdrop-blur-2xl space-y-1">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-[#787774]">Total Imponible</span>
-            <p className="text-xl font-bold font-mono text-[#37352F]">${lreReport.totalTaxable.toLocaleString('es-CL')}</p>
-          </div>
-          <div className="rounded-2xl border border-white/80 bg-white/60 p-4 shadow-2xs backdrop-blur-2xl space-y-1">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-[#787774]">Desc. Legales</span>
-            <p className="text-xl font-bold font-mono text-rose-700">-${lreReport.totalLegalDeductions.toLocaleString('es-CL')}</p>
-          </div>
-          <div className="rounded-2xl border border-white/80 bg-white/60 p-4 shadow-2xs backdrop-blur-2xl space-y-1">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-[#787774]">Líquido General</span>
-            <p className="text-xl font-bold font-mono text-emerald-800">${lreReport.totalNetPayable.toLocaleString('es-CL')}</p>
-          </div>
-        </div>
-      )}
-
-      {/* Main Content & Table */}
+      {/* Main Content Area */}
       {isLoading ? (
-        <div className="p-8 text-center text-sm text-[#787774]">Cargando informe LRE de la Dirección del Trabajo...</div>
+        <div className="p-8 text-center text-xs text-[#787774]">Cargando informe del LRE...</div>
       ) : isError ? (
-        <AlertBanner type="error" message={Array.isArray(errorMessage) ? errorMessage.join(', ') : errorMessage} />
+        <AlertBanner type="error" message={errorMessage} />
       ) : !lreReport || lreReport.records.length === 0 ? (
         <div className="rounded-2xl border border-white/80 bg-white/60 p-8 shadow-sm backdrop-blur-2xl text-center space-y-3">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-neutral-100 text-[#787774]">
-            <TableCellsIcon className="h-6 w-6" />
+            <DocumentCheckIcon className="h-6 w-6" />
           </div>
-          <h3 className="text-base font-semibold text-[#37352F]">Sin liquidaciones para este período</h3>
+          <h3 className="text-base font-semibold text-[#37352F]">Sin registros de remuneración</h3>
           <p className="text-xs text-[#787774] max-w-sm mx-auto">
-            No se encontraron liquidaciones de sueldo calculadas para el período <strong>{periodYyyyMm}</strong>. Calcula las liquidaciones en el módulo de remuneraciones antes de exportar el LRE.
+            No se encontraron liquidaciones calculadas para el período <strong>{periodYyyyMm}</strong>.
           </p>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-2xl border border-white/80 bg-white/60 shadow-sm backdrop-blur-2xl space-y-4">
-          <div className="px-6 py-4 border-b border-neutral-200/60 flex justify-between items-center bg-white/40">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-[#37352F] flex items-center gap-2">
-              <DocumentCheckIcon className="h-4 w-4 text-emerald-700" />
-              <span>Pre-visualización de Registro LRE (DT Chile)</span>
-            </h3>
-            <span className="text-[11px] text-[#787774] font-medium">
-              Empresa: <strong>{lreReport.companyName}</strong>
-            </span>
+        <div className="space-y-4">
+          {/* Summary Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="rounded-2xl border border-white/80 bg-white/60 p-4 shadow-sm backdrop-blur-2xl">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#787774] block mb-1">
+                Trabajadores en LRE
+              </span>
+              <span className="text-xl font-bold font-mono text-[#37352F]">
+                {lreReport.records.length}
+              </span>
+            </div>
+
+            <div className="rounded-2xl border border-white/80 bg-white/60 p-4 shadow-sm backdrop-blur-2xl">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#787774] block mb-1">
+                Total Imponible
+              </span>
+              <span className="text-xl font-bold font-mono text-[#37352F]">
+                ${Number(lreReport.totalTaxable).toLocaleString('es-CL')}
+              </span>
+            </div>
+
+            <div className="rounded-2xl border border-white/80 bg-white/60 p-4 shadow-sm backdrop-blur-2xl">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#787774] block mb-1">
+                Líquido Total a Pagar
+              </span>
+              <span className="text-xl font-bold font-mono text-emerald-800">
+                ${Number(lreReport.totalNetPayable).toLocaleString('es-CL')}
+              </span>
+            </div>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="border-b border-neutral-200/60 bg-white/40 text-[#787774] uppercase tracking-wider font-semibold">
-                <tr>
-                  <th className="px-6 py-3">RUT</th>
-                  <th className="px-6 py-3">Nombre Trabajador</th>
-                  <th className="px-6 py-3">AFP / Salud</th>
-                  <th className="px-6 py-3 text-right">Sueldo Base</th>
-                  <th className="px-6 py-3 text-right">Tot. Imponible</th>
-                  <th className="px-6 py-3 text-right">Tot. No Imponible</th>
-                  <th className="px-6 py-3 text-right">Desc. Legales</th>
-                  <th className="px-6 py-3 text-right">Líquido A Pagar</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-neutral-200/60 text-[#37352F]">
-                {lreReport.records.map((r) => (
-                  <tr key={r.payrollId} className="hover:bg-white/40 transition-colors">
-                    <td className="px-6 py-3.5 font-mono font-medium">{r.workerRut}</td>
-                    <td className="px-6 py-3.5 font-semibold">
-                      {r.workerName}
-                      <span className="block text-[10px] text-[#787774] font-normal">{r.companyName}</span>
-                    </td>
-                    <td className="px-6 py-3.5 text-[11px]">
-                      {r.afpName} / {r.healthName}
-                    </td>
-                    <td className="px-6 py-3.5 text-right font-mono font-medium">
-                      ${r.baseSalary.toLocaleString('es-CL')}
-                    </td>
-                    <td className="px-6 py-3.5 text-right font-mono font-medium">
-                      ${r.totalTaxable.toLocaleString('es-CL')}
-                    </td>
-                    <td className="px-6 py-3.5 text-right font-mono text-emerald-800">
-                      +${r.totalNonTaxable.toLocaleString('es-CL')}
-                    </td>
-                    <td className="px-6 py-3.5 text-right font-mono text-rose-700">
-                      -${r.totalLegalDeductions.toLocaleString('es-CL')}
-                    </td>
-                    <td className="px-6 py-3.5 text-right font-mono font-bold text-sm text-[#37352F]">
-                      ${r.netPayable.toLocaleString('es-CL')}
-                    </td>
+          {/* LRE Preview Table */}
+          <div className="overflow-hidden rounded-2xl border border-white/80 bg-white/60 shadow-sm backdrop-blur-2xl">
+            <div className="p-4 border-b border-neutral-200/60 flex items-center justify-between">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-[#37352F]">
+                Vista Previa Registros LRE (45 Campos DT)
+              </h3>
+              <span className="text-[11px] font-mono text-[#787774]">
+                Período: {lreReport.periodYyyyMm}
+              </span>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="border-b border-neutral-200/60 bg-white/40 text-[#787774] uppercase tracking-wider text-[10px] font-semibold">
+                  <tr>
+                    <th className="py-3 px-4">Trabajador (RUT & Nombre)</th>
+                    <th className="py-3 px-3">Días Trab.</th>
+                    <th className="py-3 px-3 text-right">Sueldo Base</th>
+                    <th className="py-3 px-3 text-right">Tot. Imponible</th>
+                    <th className="py-3 px-3 text-right">Tot. No Impon.</th>
+                    <th className="py-3 px-3 text-right">AFP</th>
+                    <th className="py-3 px-3 text-right">Salud</th>
+                    <th className="py-3 px-3 text-right">Tot. Descuentos</th>
+                    <th className="py-3 px-4 text-right">Líquido a Pagar</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-neutral-200/60 text-[#37352F]">
+                  {lreReport.records.map((rec) => (
+                    <tr key={rec.payrollId} className="hover:bg-white/40 transition-colors">
+                      <td className="py-3 px-4">
+                        <span className="block font-bold">{rec.workerName}</span>
+                        <span className="text-[10px] text-[#787774] font-mono">{rec.workerRut}</span>
+                      </td>
+                      <td className="py-3 px-3 font-mono">{rec.workedDays}</td>
+                      <td className="py-3 px-3 text-right font-mono">${rec.baseSalary.toLocaleString('es-CL')}</td>
+                      <td className="py-3 px-3 text-right font-mono font-medium">${rec.totalTaxable.toLocaleString('es-CL')}</td>
+                      <td className="py-3 px-3 text-right font-mono text-emerald-800">${rec.totalNonTaxable.toLocaleString('es-CL')}</td>
+                      <td className="py-3 px-3 text-right font-mono">${rec.afpDeduction.toLocaleString('es-CL')}</td>
+                      <td className="py-3 px-3 text-right font-mono">${rec.healthDeduction.toLocaleString('es-CL')}</td>
+                      <td className="py-3 px-3 text-right font-mono text-rose-700">${rec.totalLegalDeductions.toLocaleString('es-CL')}</td>
+                      <td className="py-3 px-4 text-right font-mono font-bold text-emerald-800">${rec.netPayable.toLocaleString('es-CL')}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}
 
-      {/* Export History Log Table */}
-      <ExportHistoryTable exportType="LRE_CSV" periodYyyyMm={periodYyyyMm} companyId={parsedCompanyId} />
+      {/* Export History Log Table Component */}
+      <ExportHistoryTable exportType="LRE_DT" title="Historial de Descargas de LRE (.CSV DT)" />
     </div>
   );
 };

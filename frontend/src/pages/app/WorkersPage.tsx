@@ -12,23 +12,17 @@ import {
   ChevronRightIcon,
 } from '@heroicons/react/24/outline';
 import workersService from '../../services/workersService';
-import companiesService from '../../services/companiesService';
 import WorkerModal from '../../components/modals/WorkerModal';
 import AlertBanner from '../../components/common/AlertBanner';
-import CustomSelect from '../../components/common/CustomSelect';
 import { cleanRut } from '../../utils/rutUtils';
+import { useAppSelector } from '../../store/store';
 
 const ITEMS_PER_PAGE = 10;
 
-interface FilterCompanyOption {
-  value: string;
-  label: string;
-}
-
 export const WorkersPage: React.FC = () => {
+  const selectedCompanyId = useAppSelector((state) => state.company.selectedCompanyId);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCompanyId, setSelectedCompanyId] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [apiError, setApiError] = useState<string | null>(null);
 
@@ -40,24 +34,6 @@ export const WorkersPage: React.FC = () => {
     queryKey: ['workers'],
     queryFn: workersService.getAll,
   });
-
-  // Fetch companies for filter dropdown
-  const { data: companies = [] } = useQuery({
-    queryKey: ['companies'],
-    queryFn: companiesService.getAll,
-  });
-
-  const filterCompanyOptions: FilterCompanyOption[] = useMemo(
-    () => [
-      { value: 'all', label: 'Todas las Empresas' },
-      { value: 'unassigned', label: 'Sin Empresa Asignada' },
-      ...companies.map((comp) => ({
-        value: comp.id.toString(),
-        label: comp.name,
-      })),
-    ],
-    [companies]
-  );
 
   const deleteMutation = useMutation({
     mutationFn: workersService.delete,
@@ -112,9 +88,6 @@ export const WorkersPage: React.FC = () => {
     }
   };
 
-  const selectedFilterOption =
-    filterCompanyOptions.find((opt) => opt.value === selectedCompanyId) || filterCompanyOptions[0];
-
   return (
     <div className="space-y-6 max-w-5xl selection:bg-neutral-200">
       {/* Header Banner */}
@@ -145,7 +118,7 @@ export const WorkersPage: React.FC = () => {
 
       {apiError && <AlertBanner type="error" message={apiError} />}
 
-      {/* Controls Bar: Search Input & Company Filter */}
+      {/* Controls Bar: Search Input */}
       <div className="flex flex-col sm:flex-row items-center gap-3">
         {/* Search Input */}
         <div className="relative flex-1 w-full">
@@ -156,16 +129,6 @@ export const WorkersPage: React.FC = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full rounded-2xl border border-white/80 bg-white/70 pl-10 pr-4 py-2 text-xs text-[#37352F] placeholder-[#787774]/70 shadow-2xs backdrop-blur-md focus:border-[#37352F] focus:outline-none focus:ring-1 focus:ring-[#37352F]"
-          />
-        </div>
-
-        {/* Company Filter Select (React Select) */}
-        <div className="w-full sm:w-64">
-          <CustomSelect<FilterCompanyOption>
-            options={filterCompanyOptions}
-            value={selectedFilterOption}
-            onChange={(option) => setSelectedCompanyId(option?.value || 'all')}
-            placeholder="Filtrar por empresa..."
           />
         </div>
       </div>
@@ -248,9 +211,9 @@ export const WorkersPage: React.FC = () => {
           {/* Pagination Controls */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-2 py-1 text-xs text-[#787774]">
             <div>
-              Mostrando{' '}
+              Mostrando del{' '}
               <span className="font-semibold text-[#37352F]">
-                {Math.min((currentPage - 1) * ITEMS_PER_PAGE + 1, filteredWorkers.length)}
+                {(currentPage - 1) * ITEMS_PER_PAGE + 1}
               </span>{' '}
               a{' '}
               <span className="font-semibold text-[#37352F]">

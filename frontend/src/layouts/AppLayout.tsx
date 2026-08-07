@@ -2,6 +2,7 @@ import React from 'react';
 import { Outlet } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import Sidebar from '../components/layout/Sidebar';
+import Navbar from '../components/layout/Navbar';
 import Breadcrumbs from '../components/common/Breadcrumbs';
 
 export const AppLayout: React.FC = () => {
@@ -19,11 +20,15 @@ export const AppLayout: React.FC = () => {
       {/* Sidebar Component */}
       <Sidebar />
 
-      {/* Main Content Area */}
-      <main className="relative flex-1 overflow-y-auto p-8">
-        <Breadcrumbs />
-        <Outlet />
-      </main>
+      {/* Main Content Column with Top Navbar */}
+      <div className="relative flex flex-1 flex-col overflow-hidden">
+        <Navbar />
+
+        <main className="relative flex-1 overflow-y-auto p-8">
+          <Breadcrumbs />
+          <Outlet />
+        </main>
+      </div>
     </div>
   );
 };

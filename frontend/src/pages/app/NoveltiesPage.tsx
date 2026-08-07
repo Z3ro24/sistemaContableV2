@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   CalendarDaysIcon,
@@ -10,28 +10,27 @@ import {
   MagnifyingGlassIcon,
 } from '@heroicons/react/24/outline';
 import workersService from '../../services/workersService';
-import companiesService from '../../services/companiesService';
 import noveltiesService, { type MonthlyNoveltyData } from '../../services/noveltiesService';
-import CustomSelect from '../../components/common/CustomSelect';
 import AlertBanner from '../../components/common/AlertBanner';
 import NoveltyModal from '../../components/modals/NoveltyModal';
-
-interface SelectOption {
-  value: string;
-  label: string;
-}
+import { useAppSelector } from '../../store/store';
 
 export const NoveltiesPage: React.FC = () => {
   const queryClient = useQueryClient();
+  const filterCompanyId = useAppSelector((state) => state.company.selectedCompanyId);
 
   // Filters & Search
   const [filterPeriod, setFilterPeriod] = useState<string>('2026-07');
-  const [filterCompanyId, setFilterCompanyId] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   // Pagination (10 per page)
   const [currentPage, setCurrentPage] = useState<number>(1);
   const itemsPerPage = 10;
+
+  // Reset to page 1 on filter or company change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterCompanyId, filterPeriod, searchQuery]);
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -41,12 +40,6 @@ export const NoveltiesPage: React.FC = () => {
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [pageApiError, setPageApiError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-
-  // Fetch Companies
-  const { data: companies = [] } = useQuery({
-    queryKey: ['companies'],
-    queryFn: companiesService.getAll,
-  });
 
   // Fetch Workers
   const { data: workers = [] } = useQuery({
@@ -76,11 +69,6 @@ export const NoveltiesPage: React.FC = () => {
       setPageApiError(Array.isArray(msg) ? msg.join(', ') : msg);
     },
   });
-
-  const filterCompanyOptions: SelectOption[] = [
-    { value: 'all', label: 'Todas las Empresas' },
-    ...companies.map((c) => ({ value: c.id.toString(), label: c.name })),
-  ];
 
   // Client-side search filtering
   const filteredNovelties = noveltiesList.filter((n) => {
@@ -149,17 +137,6 @@ export const NoveltiesPage: React.FC = () => {
       {/* Filter & Search Bar */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
         <div className="flex flex-wrap items-center gap-3">
-          <div className="w-full sm:w-56">
-            <CustomSelect<SelectOption>
-              options={filterCompanyOptions}
-              value={filterCompanyOptions.find((o) => o.value === filterCompanyId) || filterCompanyOptions[0]}
-              onChange={(opt) => {
-                setFilterCompanyId(opt?.value || 'all');
-                setCurrentPage(1);
-              }}
-            />
-          </div>
-
           <div className="w-full sm:w-40">
             <input
               type="month"

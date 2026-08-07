@@ -7,39 +7,29 @@ import {
 } from '@heroicons/react/24/outline';
 import payrollsService from '../../services/payrollsService';
 import companiesService from '../../services/companiesService';
-import CustomSelect from '../../components/common/CustomSelect';
 import AlertBanner from '../../components/common/AlertBanner';
 import ExportHistoryTable from '../../components/common/ExportHistoryTable';
 import BankPayrollModal from '../../components/modals/BankPayrollModal';
-
-interface SelectOption {
-  value: string;
-  label: string;
-}
+import { useAppSelector } from '../../store/store';
 
 export const BankTransfersPage: React.FC = () => {
   const [periodYyyyMm, setPeriodYyyyMm] = useState('2026-07');
-  const [filterCompanyId, setFilterCompanyId] = useState('all');
   const [isBankModalOpen, setIsBankModalOpen] = useState(false);
 
-  // Fetch Companies
+  const filterCompanyId = useAppSelector((state) => state.company.selectedCompanyId);
+  const parsedCompanyId = filterCompanyId !== 'all' ? parseInt(filterCompanyId, 10) : undefined;
+
+  // Fetch Companies (used for getSelectedCompanyName)
   const { data: companies = [] } = useQuery({
     queryKey: ['companies'],
     queryFn: companiesService.getAll,
   });
-
-  const parsedCompanyId = filterCompanyId !== 'all' ? parseInt(filterCompanyId, 10) : undefined;
 
   // Fetch Payrolls
   const { data: payrolls = [], isLoading, isError } = useQuery({
     queryKey: ['payrolls', periodYyyyMm, filterCompanyId],
     queryFn: () => payrollsService.getAll(periodYyyyMm, parsedCompanyId),
   });
-
-  const filterCompanyOptions: SelectOption[] = [
-    { value: 'all', label: 'Todas las Empresas' },
-    ...companies.map((c) => ({ value: c.id.toString(), label: c.name })),
-  ];
 
   const getSelectedCompanyName = () => {
     if (filterCompanyId === 'all') return 'Todas_Las_Empresas';
@@ -59,10 +49,10 @@ export const BankTransfersPage: React.FC = () => {
           </div>
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-[#37352F]">
-              Pago Masivo de Sueldos a Bancos
+              Nómina de Transferencias Bancarias
             </h1>
             <p className="text-xs text-[#787774]">
-              Generación y pre-validación de archivos de transferencia masiva para Santander, BancoEstado PAE, Banco de Chile y TEF.
+              Generación de archivos de pago masivo de remuneraciones para Banco de Chile, BancoEstado y Santander.
             </p>
           </div>
         </div>
@@ -74,23 +64,12 @@ export const BankTransfersPage: React.FC = () => {
           className="flex items-center justify-center gap-2 rounded-xl bg-[#37352F] px-4 py-2.5 text-xs font-semibold text-white shadow-sm transition-all hover:bg-[#201F1C] focus:outline-none focus:ring-2 focus:ring-neutral-400 disabled:opacity-50"
         >
           <ArrowDownTrayIcon className="h-4 w-4 text-emerald-400" />
-          <span>Generar Archivo Bancario</span>
+          <span>Generar Nómina Bancaria</span>
         </button>
       </div>
 
       {/* Filter Bar */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
-        <div className="w-full sm:w-64">
-          <label className="text-[10px] font-bold uppercase tracking-wider text-[#787774] block mb-1">
-            Empresa
-          </label>
-          <CustomSelect<SelectOption>
-            options={filterCompanyOptions}
-            value={filterCompanyOptions.find((o) => o.value === filterCompanyId) || filterCompanyOptions[0]}
-            onChange={(opt) => setFilterCompanyId(opt?.value || 'all')}
-          />
-        </div>
-
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-start gap-4">
         <div className="w-full sm:w-44">
           <label className="text-[10px] font-bold uppercase tracking-wider text-[#787774] block mb-1">
             Período (YYYY-MM)
@@ -104,57 +83,63 @@ export const BankTransfersPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Metrics Summary Cards */}
-      {payrolls.length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-          <div className="rounded-2xl border border-white/80 bg-white/60 p-4 shadow-2xs backdrop-blur-2xl space-y-1">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-[#787774]">Total Liquidaciones</span>
-            <p className="text-xl font-bold text-[#37352F]">{payrolls.length} Empleado(s)</p>
+      {/* Content Area */}
+      {isLoading ? (
+        <div className="p-8 text-center text-xs text-[#787774]">Cargando resumen de nómina bancaria...</div>
+      ) : isError ? (
+        <AlertBanner type="error" message="Error al cargar los pagos para la nómina bancaria" />
+      ) : payrolls.length === 0 ? (
+        <div className="rounded-2xl border border-white/80 bg-white/60 p-8 shadow-sm backdrop-blur-2xl text-center space-y-3">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-neutral-100 text-[#787774]">
+            <BanknotesIcon className="h-6 w-6" />
           </div>
-          <div className="rounded-2xl border border-white/80 bg-white/60 p-4 shadow-2xs backdrop-blur-2xl space-y-1">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-[#787774]">Monto Total a Transferir</span>
-            <p className="text-xl font-bold font-mono text-emerald-800">${totalAmount.toLocaleString('es-CL')}</p>
-          </div>
-          <div className="col-span-2 sm:col-span-1 rounded-2xl border border-white/80 bg-white/60 p-4 shadow-2xs backdrop-blur-2xl space-y-1">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-[#787774]">Formatos Soportados</span>
-            <p className="text-xs font-semibold text-[#37352F] pt-1">Santander, PAE, B.Chile, TEF</p>
+          <h3 className="text-base font-semibold text-[#37352F]">Sin pagos pendientes</h3>
+          <p className="text-xs text-[#787774] max-w-sm mx-auto">
+            No existen liquidaciones calculadas para el período <strong>{periodYyyyMm}</strong> para generar transferencias masivas.
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {/* Summary Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="rounded-2xl border border-white/80 bg-white/60 p-4 shadow-sm backdrop-blur-2xl">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#787774] block mb-1">
+                Registros de Pago
+              </span>
+              <span className="text-xl font-bold font-mono text-[#37352F]">
+                {payrolls.length} Trabajadores
+              </span>
+            </div>
+
+            <div className="rounded-2xl border border-white/80 bg-white/60 p-4 shadow-sm backdrop-blur-2xl">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#787774] block mb-1">
+                Monto Total a Transferir
+              </span>
+              <span className="text-xl font-bold font-mono text-emerald-800">
+                ${totalAmount.toLocaleString('es-CL')}
+              </span>
+            </div>
+
+            <div className="rounded-2xl border border-white/80 bg-white/60 p-4 shadow-sm backdrop-blur-2xl">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#787774] block mb-1">
+                Formatos Soportados
+              </span>
+              <span className="text-xs font-semibold text-[#37352F] block mt-1">
+                BancoChile (.TXT), BancoEstado (.CSV), Santander (.TXT)
+              </span>
+            </div>
           </div>
         </div>
       )}
 
-      {/* Main Content State */}
-      {isLoading ? (
-        <div className="p-8 text-center text-xs text-[#787774]">Cargando nóminas para transferencia bancaria...</div>
-      ) : isError ? (
-        <AlertBanner type="error" message="Error al obtener las liquidaciones para pago bancario" />
-      ) : payrolls.length === 0 ? (
-        <div className="rounded-2xl border border-white/80 bg-white/60 p-8 shadow-sm backdrop-blur-2xl text-center space-y-3">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-neutral-100 text-[#787774]">
-            <BanknotesIcon className="h-6 w-6 text-emerald-700" />
-          </div>
-          <h3 className="text-base font-semibold text-[#37352F]">Sin liquidaciones para transferir</h3>
-          <p className="text-xs text-[#787774] max-w-sm mx-auto">
-            No se encontraron liquidaciones de sueldo emitidas para el período <strong>{periodYyyyMm}</strong>.
-          </p>
-        </div>
-      ) : null}
-
       {/* Export History Table Component */}
-      <ExportHistoryTable periodYyyyMm={periodYyyyMm} companyId={parsedCompanyId} />
+      <ExportHistoryTable exportType="BANK_TRANSFER" title="Historial de Descargas de Nóminas Bancarias" />
 
-      {/* Bank Modal */}
+      {/* Bank Transfer Generator Modal */}
       <BankPayrollModal
         isOpen={isBankModalOpen}
         onClose={() => setIsBankModalOpen(false)}
-        payrolls={payrolls.map((p) => ({
-          ...p,
-          worker: {
-            ...p.worker,
-            bank: p.worker.bank || undefined,
-            bankAccountType: p.worker.bankAccountType || undefined,
-            bankAccountNumber: p.worker.bankAccountNumber || undefined,
-          },
-        }))}
+        payrolls={payrolls}
         companyName={getSelectedCompanyName()}
       />
     </div>

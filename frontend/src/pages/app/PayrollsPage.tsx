@@ -30,6 +30,8 @@ import {
   generateZipOfPdfs,
 } from "../../utils/massExportUtils";
 
+import { useAppSelector } from "../../store/store";
+
 interface SelectOption {
   value: string;
   label: string;
@@ -37,6 +39,8 @@ interface SelectOption {
 
 export const PayrollsPage: React.FC = () => {
   const queryClient = useQueryClient();
+  const filterCompanyId = useAppSelector((state) => state.company.selectedCompanyId);
+
   const [isCalcModalOpen, setIsCalcModalOpen] = useState(false);
   const [isBankModalOpen, setIsBankModalOpen] = useState(false);
   const [selectedPayroll, setSelectedPayroll] = useState<Payroll | null>(null);
@@ -53,9 +57,6 @@ export const PayrollsPage: React.FC = () => {
   // Separated Error States
   const [pageApiError, setPageApiError] = useState<string | null>(null);
   const [modalApiError, setModalApiError] = useState<string | null>(null);
-
-  // Filter state
-  const [filterCompanyId, setFilterCompanyId] = useState("all");
 
   // Fetch Payrolls
   const {
@@ -77,7 +78,7 @@ export const PayrollsPage: React.FC = () => {
     queryFn: workersService.getAll,
   });
 
-  // Fetch Companies for filter
+  // Fetch Companies
   const { data: companies = [] } = useQuery({
     queryKey: ["companies"],
     queryFn: companiesService.getAll,
@@ -89,11 +90,6 @@ export const PayrollsPage: React.FC = () => {
       value: w.id.toString(),
       label: `${w.name} ${w.paternalLastName || ""} (${w.rut}) - ${w.company?.name || "Sin Empresa"}`,
     })),
-  ];
-
-  const filterCompanyOptions: SelectOption[] = [
-    { value: "all", label: "Todas las Empresas" },
-    ...companies.map((c) => ({ value: c.id.toString(), label: c.name })),
   ];
 
   const getSelectedCompanyName = () => {
@@ -263,18 +259,8 @@ export const PayrollsPage: React.FC = () => {
         </div>
       )}
 
-      {/* Filter & Mass Export Bar */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-        <div className="w-full sm:w-64">
-          <CustomSelect<SelectOption>
-            options={filterCompanyOptions}
-            value={
-              filterCompanyOptions.find((o) => o.value === filterCompanyId) ||
-              filterCompanyOptions[0]
-            }
-            onChange={(opt) => setFilterCompanyId(opt?.value || "all")}
-          />
-        </div>
+      {/* Mass Export Bar */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3">
 
         <div className="flex items-center gap-2 self-end sm:self-auto">
           {/* Bank Payroll Transfer File Generator Button */}

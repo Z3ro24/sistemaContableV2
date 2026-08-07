@@ -4,6 +4,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { XMarkIcon, BuildingOfficeIcon } from '@heroicons/react/24/outline';
 import { Save } from 'lucide-react';
 import { toast } from 'sonner';
+import { useAppDispatch } from '../../store/store';
+import { setSelectedCompanyId } from '../../store/slices/company.slice';
 import companiesService from '../../services/companiesService';
 import { formatRut, validateRut } from '../../utils/rutUtils';
 import { companySchema } from '../../validators/companyValidator';
@@ -23,11 +25,16 @@ export const CompanyModal: React.FC<CompanyModalProps> = ({ isOpen, onClose }) =
 
   const queryClient = useQueryClient();
 
+  const dispatch = useAppDispatch();
+
   const createMutation = useMutation({
     mutationFn: companiesService.create,
-    onSuccess: () => {
+    onSuccess: (newCompany) => {
       queryClient.invalidateQueries({ queryKey: ['companies'] });
-      toast.success('Empresa guardada exitosamente');
+      if (newCompany?.id) {
+        dispatch(setSelectedCompanyId(newCompany.id.toString()));
+      }
+      toast.success('Empresa guardada y seleccionada como activa exitosamente');
       handleClose();
     },
     onError: (err: any) => {

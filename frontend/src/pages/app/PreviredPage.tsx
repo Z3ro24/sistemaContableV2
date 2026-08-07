@@ -7,28 +7,16 @@ import {
 } from '@heroicons/react/24/outline';
 import previredExporterService from '../../services/previredExporterService';
 import payrollsService from '../../services/payrollsService';
-import companiesService from '../../services/companiesService';
-import CustomSelect from '../../components/common/CustomSelect';
 import AlertBanner from '../../components/common/AlertBanner';
 import ExportHistoryTable from '../../components/common/ExportHistoryTable';
-
-interface SelectOption {
-  value: string;
-  label: string;
-}
+import { useAppSelector } from '../../store/store';
 
 export const PreviredPage: React.FC = () => {
   const [periodYyyyMm, setPeriodYyyyMm] = useState('2026-07');
-  const [filterCompanyId, setFilterCompanyId] = useState('all');
   const [isExporting, setIsExporting] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
 
-  // Fetch Companies
-  const { data: companies = [] } = useQuery({
-    queryKey: ['companies'],
-    queryFn: companiesService.getAll,
-  });
-
+  const filterCompanyId = useAppSelector((state) => state.company.selectedCompanyId);
   const parsedCompanyId = filterCompanyId !== 'all' ? parseInt(filterCompanyId, 10) : undefined;
 
   // Fetch Payrolls for pre-visualization metrics
@@ -36,11 +24,6 @@ export const PreviredPage: React.FC = () => {
     queryKey: ['payrolls', periodYyyyMm, filterCompanyId],
     queryFn: () => payrollsService.getAll(periodYyyyMm, parsedCompanyId),
   });
-
-  const filterCompanyOptions: SelectOption[] = [
-    { value: 'all', label: 'Todas las Empresas' },
-    ...companies.map((c) => ({ value: c.id.toString(), label: c.name })),
-  ];
 
   const handleDownloadTxt = async () => {
     if (payrolls.length === 0) return;
@@ -91,18 +74,7 @@ export const PreviredPage: React.FC = () => {
       {apiError && <AlertBanner type="error" message={apiError} />}
 
       {/* Filter Bar */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
-        <div className="w-full sm:w-64">
-          <label className="text-[10px] font-bold uppercase tracking-wider text-[#787774] block mb-1">
-            Empresa
-          </label>
-          <CustomSelect<SelectOption>
-            options={filterCompanyOptions}
-            value={filterCompanyOptions.find((o) => o.value === filterCompanyId) || filterCompanyOptions[0]}
-            onChange={(opt) => setFilterCompanyId(opt?.value || 'all')}
-          />
-        </div>
-
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-start gap-4">
         <div className="w-full sm:w-44">
           <label className="text-[10px] font-bold uppercase tracking-wider text-[#787774] block mb-1">
             Período (YYYY-MM)
@@ -116,50 +88,66 @@ export const PreviredPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Metrics Summary Cards */}
-      {payrolls.length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-          <div className="rounded-2xl border border-white/80 bg-white/60 p-4 shadow-2xs backdrop-blur-2xl space-y-1">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-[#787774]">Trabajadores Informados</span>
-            <p className="text-xl font-bold text-[#37352F]">{payrolls.length} Empleado(s)</p>
-          </div>
-          <div className="rounded-2xl border border-white/80 bg-white/60 p-4 shadow-2xs backdrop-blur-2xl space-y-1">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-[#787774]">Monto Total Imponible</span>
-            <p className="text-xl font-bold font-mono text-[#37352F]">${totalTaxable.toLocaleString('es-CL')}</p>
-          </div>
-          <div className="col-span-2 sm:col-span-1 rounded-2xl border border-white/80 bg-white/60 p-4 shadow-2xs backdrop-blur-2xl space-y-1">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-[#787774]">Cotizaciones Previsionales</span>
-            <p className="text-xl font-bold font-mono text-amber-800">${totalLegal.toLocaleString('es-CL')}</p>
-          </div>
-        </div>
-      )}
-
-      {/* Pre-visualization Content */}
+      {/* Content Area */}
       {isLoading ? (
-        <div className="p-8 text-center text-xs text-[#787774]">Cargando datos para PreviRed...</div>
+        <div className="p-8 text-center text-xs text-[#787774]">Cargando resumen para PreviRed...</div>
       ) : isError ? (
-        <AlertBanner type="error" message="Error al obtener las liquidaciones para el archivo PreviRed" />
+        <AlertBanner type="error" message="Error al cargar las liquidaciones para el archivo PreviRed" />
       ) : payrolls.length === 0 ? (
         <div className="rounded-2xl border border-white/80 bg-white/60 p-8 shadow-sm backdrop-blur-2xl text-center space-y-3">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-neutral-100 text-[#787774]">
-            <DocumentTextIcon className="h-6 w-6 text-amber-600" />
+            <DocumentTextIcon className="h-6 w-6" />
           </div>
-          <h3 className="text-base font-semibold text-[#37352F]">Sin liquidaciones procesadas</h3>
+          <h3 className="text-base font-semibold text-[#37352F]">Sin liquidaciones registradas</h3>
           <p className="text-xs text-[#787774] max-w-sm mx-auto">
-            No existen liquidaciones calculadas para el período <strong>{periodYyyyMm}</strong>.
+            No existen liquidaciones calculadas en el período <strong>{periodYyyyMm}</strong> para generar el archivo PreviRed.
           </p>
         </div>
       ) : (
-        <div className="rounded-2xl border border-emerald-200 bg-emerald-50/80 p-4 text-xs text-emerald-900 flex items-center gap-3">
-          <CheckCircleIcon className="h-5 w-5 text-emerald-600 flex-shrink-0" />
-          <span>
-            Se han validado los códigos de AFP y Fonasa/Isapre para los <strong>{payrolls.length} trabajadores</strong>. El archivo cumple con el formato plano de 105 columnas de PreviRed.
-          </span>
+        <div className="space-y-4">
+          {/* Summary Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="rounded-2xl border border-white/80 bg-white/60 p-4 shadow-sm backdrop-blur-2xl">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#787774] block mb-1">
+                Registros a Declarar
+              </span>
+              <span className="text-xl font-bold font-mono text-[#37352F]">
+                {payrolls.length} Trabajadores
+              </span>
+            </div>
+
+            <div className="rounded-2xl border border-white/80 bg-white/60 p-4 shadow-sm backdrop-blur-2xl">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#787774] block mb-1">
+                Monto Imponible Consolidado
+              </span>
+              <span className="text-xl font-bold font-mono text-[#37352F]">
+                ${totalTaxable.toLocaleString('es-CL')}
+              </span>
+            </div>
+
+            <div className="rounded-2xl border border-white/80 bg-white/60 p-4 shadow-sm backdrop-blur-2xl">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#787774] block mb-1">
+                Cotizaciones Previsionales
+              </span>
+              <span className="text-xl font-bold font-mono text-amber-800">
+                ${totalLegal.toLocaleString('es-CL')}
+              </span>
+            </div>
+          </div>
+
+          {/* Validation Notice */}
+          <div className="rounded-2xl border border-emerald-200/80 bg-emerald-50/60 p-4 text-xs text-emerald-950 shadow-2xs backdrop-blur-md flex items-center gap-3">
+            <CheckCircleIcon className="h-5 w-5 text-emerald-600 shrink-0" />
+            <div>
+              <span className="font-bold">Formato 105 Columnas Validado: </span>
+              Las remuneraciones cumplen con las especificaciones de separadores de campo, códigos de AFP, ISAPRE y tramos de asignación familiar exigidos por la plataforma PreviRed.
+            </div>
+          </div>
         </div>
       )}
 
       {/* Export History Table Component */}
-      <ExportHistoryTable exportType="PREVIRED_TXT" periodYyyyMm={periodYyyyMm} companyId={parsedCompanyId} />
+      <ExportHistoryTable exportType="PREVIRED" title="Historial de Descargas de PreviRed (.TXT)" />
     </div>
   );
 };
