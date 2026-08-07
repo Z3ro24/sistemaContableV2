@@ -36,7 +36,7 @@ stack:
     packageManager: pnpm
     styling:
       - TailwindCSS
-      - HeadlessUI
+      - Shadcn UI
       - Responsive
       - Mobile First
       - Dark Mode

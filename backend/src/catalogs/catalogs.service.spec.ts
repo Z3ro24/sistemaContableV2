@@ -42,6 +42,10 @@ describe('CatalogsService', () => {
     prisma = module.get<PrismaService>(PrismaService);
   });
 
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   it('should be defined', () => {
     expect(service).toBeDefined();
   });
@@ -72,9 +76,21 @@ describe('CatalogsService', () => {
   });
 
   it('should return live UF value and date structure', async () => {
+    jest.spyOn(global, 'fetch').mockImplementation(() =>
+      Promise.resolve({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            uf: { valor: 38500, fecha: '2026-08-06' },
+            utm: { valor: 67500, fecha: '2026-08-06' },
+          }),
+      } as any)
+    );
+
     const uf = await service.getLiveUf();
     expect(uf).toHaveProperty('valor');
     expect(uf).toHaveProperty('fecha');
     expect(typeof uf.valor).toBe('number');
+    expect(uf.valor).toBe(38500);
   });
 });
