@@ -313,18 +313,26 @@ export const NoveltiesPage: React.FC = () => {
       )}
 
       {/* Creation / Edition Modal */}
-      <NoveltyModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSuccess={() => {
-          queryClient.invalidateQueries({ queryKey: ['noveltiesList'] });
-          setSuccessMessage(editingNovelty ? 'Novedad actualizada exitosamente' : 'Novedad registrada exitosamente');
-          setTimeout(() => setSuccessMessage(null), 3000);
-        }}
-        initialData={editingNovelty}
-        workers={workers}
-        defaultPeriod={filterPeriod}
-      />
+      {(() => {
+        const filteredWorkersForModal = filterCompanyId === 'all'
+          ? workers
+          : workers.filter((w) => w.companyId === parseInt(filterCompanyId, 10));
+
+        return (
+          <NoveltyModal
+            isOpen={isModalOpen}
+            onClose={() => setIsModalOpen(false)}
+            onSuccess={() => {
+              queryClient.invalidateQueries({ queryKey: ['noveltiesList'] });
+              setSuccessMessage(editingNovelty ? 'Novedad actualizada exitosamente' : 'Novedad registrada exitosamente');
+              setTimeout(() => setSuccessMessage(null), 3000);
+            }}
+            initialData={editingNovelty}
+            workers={filteredWorkersForModal}
+            defaultPeriod={filterPeriod}
+          />
+        );
+      })()}
 
       {/* Delete Confirmation Dialog */}
       {deletingId && (

@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogPanel, DialogTitle } from '@headlessui/react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { XMarkIcon, UserGroupIcon } from '@heroicons/react/24/outline';
 import { Save } from 'lucide-react';
 import { toast } from 'sonner';
+import { useAppSelector } from '../../store/store';
 import workersService from '../../services/workersService';
 import companiesService from '../../services/companiesService';
 import catalogsService from '../../services/catalogsService';
@@ -30,6 +31,8 @@ const bankAccountTypeOptions: SelectOption[] = [
 ];
 
 export const WorkerModal: React.FC<WorkerModalProps> = ({ isOpen, onClose }) => {
+  const selectedCompanyId = useAppSelector((state) => state.company.selectedCompanyId);
+
   const [name, setName] = useState('');
   const [paternalLastName, setPaternalLastName] = useState('');
   const [maternalLastName, setMaternalLastName] = useState('');
@@ -48,6 +51,12 @@ export const WorkerModal: React.FC<WorkerModalProps> = ({ isOpen, onClose }) => 
 
   const [rutError, setRutError] = useState('');
   const [apiError, setApiError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isOpen && selectedCompanyId && selectedCompanyId !== 'all') {
+      setCompanyId(selectedCompanyId);
+    }
+  }, [isOpen, selectedCompanyId]);
 
   const queryClient = useQueryClient();
 

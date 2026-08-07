@@ -84,9 +84,13 @@ export const PayrollsPage: React.FC = () => {
     queryFn: companiesService.getAll,
   });
 
+  const filteredWorkersForModal = filterCompanyId === 'all'
+    ? workers
+    : workers.filter((w) => w.companyId === parseInt(filterCompanyId, 10));
+
   const workerOptions: SelectOption[] = [
     { value: "", label: "-- Seleccionar Persona / Trabajador --" },
-    ...workers.map((w) => ({
+    ...filteredWorkersForModal.map((w) => ({
       value: w.id.toString(),
       label: `${w.name} ${w.paternalLastName || ""} (${w.rut}) - ${w.company?.name || "Sin Empresa"}`,
     })),
