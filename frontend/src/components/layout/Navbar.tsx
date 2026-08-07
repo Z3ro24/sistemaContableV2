@@ -16,6 +16,7 @@ import { useAppDispatch, useAppSelector } from '../../store/store';
 import { setSelectedCompanyId } from '../../store/slices/company.slice';
 import { logout } from '../../store/slices/auth.slice';
 import { Button } from '../ui/button';
+import { Badge } from '../ui/badge';
 import { SidebarTrigger } from '../ui/sidebar';
 import {
   DropdownMenu,
@@ -76,8 +77,8 @@ export const Navbar: React.FC<NavbarProps> = () => {
       <div className="flex items-center gap-3">
         <SidebarTrigger />
 
-        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#37352F] text-white shadow-xs shrink-0">
-          <Building2 className="h-5 w-5 text-amber-400" />
+        <div className="flex size-9 items-center justify-center rounded-xl bg-[#37352F] text-white shadow-2xs shrink-0">
+          <Building2 className="size-5 text-amber-400" />
         </div>
 
         <div className="flex items-center gap-2">
@@ -92,7 +93,7 @@ export const Navbar: React.FC<NavbarProps> = () => {
                 className="h-9 min-w-[14rem] sm:min-w-[18rem] justify-between text-xs font-semibold"
               >
                 <span className="truncate">{selectedLabel}</span>
-                <ChevronDown className="h-3.5 w-3.5 text-[#787774] shrink-0" />
+                <ChevronDown className="size-3.5 text-[#787774] shrink-0" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-72 sm:w-80">
@@ -104,11 +105,11 @@ export const Navbar: React.FC<NavbarProps> = () => {
                 className="justify-between"
               >
                 <div className="flex items-center gap-2">
-                  <Building className="h-4 w-4 text-[#787774]" />
+                  <Building className="size-4 text-[#787774]" />
                   <span>Todas las Empresas</span>
                 </div>
                 {selectedCompanyId === 'all' && (
-                  <Check className="h-4 w-4 text-emerald-600" />
+                  <Check className="size-4 text-emerald-600" />
                 )}
               </DropdownMenuItem>
 
@@ -120,79 +121,85 @@ export const Navbar: React.FC<NavbarProps> = () => {
                     onClick={() => dispatch(setSelectedCompanyId(comp.id.toString()))}
                     className="justify-between"
                   >
-                    <div className="flex flex-col min-w-0 pr-2">
+                    <div className="flex flex-col min-w-0 pr-2 gap-0.5">
                       <span className="font-semibold truncate">{comp.name}</span>
-                      <span className="text-[10px] text-[#787774] font-mono">
-                        RUT: {comp.rutCompany}
-                      </span>
+                      <Badge variant="outline" className="w-fit text-[10px] py-0 font-mono text-muted-foreground">
+                        {comp.rutCompany}
+                      </Badge>
                     </div>
-                    {isSelected && <Check className="h-4 w-4 text-emerald-600 shrink-0" />}
+                    {isSelected && <Check className="size-4 text-emerald-600 shrink-0" />}
                   </DropdownMenuItem>
                 );
               })}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-
-        {selectedCompanyObj && (
-          <span className="hidden md:inline-flex items-center rounded-lg bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-800 border border-amber-200/80 font-mono">
-            RUT: {selectedCompanyObj.rutCompany}
-          </span>
-        )}
       </div>
 
-      {/* Right: Authenticated User Profile Menu */}
-      {user && (
+      {/* Right: User Profile Menu */}
+      <div className="flex items-center gap-3">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
-              className="h-10 px-2.5 hover:bg-neutral-100/80 rounded-xl gap-2.5"
+              className="flex items-center gap-2.5 px-2 py-1 h-auto rounded-xl hover:bg-neutral-100/80"
             >
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#37352F] text-white font-bold text-xs shadow-xs">
-                {getUserInitials(user.name)}
+              <div className="flex size-8 items-center justify-center rounded-lg bg-[#37352F] text-xs font-bold text-white shadow-2xs">
+                {getUserInitials(user?.name)}
               </div>
-              <div className="text-left hidden sm:block">
-                <span className="block text-xs font-bold text-[#37352F] leading-none mb-0.5">
-                  {user.name}
+              <div className="hidden md:flex flex-col text-left">
+                <span className="text-xs font-bold text-[#37352F] leading-tight">
+                  {user?.name || 'Usuario'}
                 </span>
-                <span className="block text-[10px] text-[#787774] capitalize font-medium">
-                  {user.role || 'Usuario'}
+                <span className="text-[10px] text-[#787774] capitalize font-medium">
+                  {user?.role || 'Administrador'}
                 </span>
               </div>
-              <ChevronDown className="h-3.5 w-3.5 text-[#787774] hidden sm:block" />
+              <ChevronDown className="hidden md:block size-3.5 text-[#787774]" />
             </Button>
           </DropdownMenuTrigger>
 
           <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel className="font-bold">Mi Cuenta</DropdownMenuLabel>
-            <div className="px-2.5 py-1.5 text-xs border-b border-neutral-200/60 mb-1">
-              <span className="block font-semibold text-[#37352F]">{user.name}</span>
-              <span className="block text-[10px] text-[#787774] font-mono">{user.email || 'user@sistemacontable.cl'}</span>
-            </div>
+            <DropdownMenuLabel className="font-normal">
+              <div className="flex flex-col space-y-1">
+                <p className="text-xs font-bold leading-none text-[#37352F]">
+                  {user?.name || 'Usuario'}
+                </p>
+                <p className="text-[11px] leading-none text-[#787774] font-mono">
+                  {user?.email || 'user@sistemacontable.cl'}
+                </p>
+              </div>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
 
             <DropdownMenuItem onClick={() => navigate('/profile')}>
-              <User className="h-4 w-4 text-[#787774]" />
-              <span>Ver Perfil</span>
+              <User className="size-4 text-[#787774]" />
+              <span>Mi Perfil</span>
+            </DropdownMenuItem>
+
+            <DropdownMenuItem onClick={() => navigate('/settings/companies')}>
+              <Building className="size-4 text-[#787774]" />
+              <span>Gestión de Empresas</span>
             </DropdownMenuItem>
 
             <DropdownMenuItem onClick={() => navigate('/settings/parameters')}>
-              <Shield className="h-4 w-4 text-[#787774]" />
-              <span>Configuración</span>
+              <Shield className="size-4 text-[#787774]" />
+              <span>Parámetros del Sistema</span>
             </DropdownMenuItem>
 
             <DropdownMenuSeparator />
 
             <DropdownMenuItem
               onClick={() => logoutMutation.mutate()}
-              className="text-rose-700 focus:bg-rose-600 focus:text-white"
+              disabled={logoutMutation.isPending}
+              className="text-rose-700 focus:bg-rose-50 focus:text-rose-700"
             >
-              <LogOut className="h-4 w-4" />
-              <span>Cerrar Sesión</span>
+              <LogOut className="size-4 text-rose-700" />
+              <span>{logoutMutation.isPending ? 'Cerrando...' : 'Cerrar Sesión'}</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-      )}
+      </div>
     </header>
   );
 };

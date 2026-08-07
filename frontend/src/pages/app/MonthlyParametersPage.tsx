@@ -16,6 +16,17 @@ import catalogsService from '../../services/catalogsService';
 import AlertBanner from '../../components/common/AlertBanner';
 import { Save } from 'lucide-react';
 import { toast } from 'sonner';
+import { Button } from '../../components/ui/button';
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from '../../components/ui/alert-dialog';
 
 // Default SII Tax Brackets (Chile)
 const defaultTaxBrackets = [
@@ -69,6 +80,7 @@ export const MonthlyParametersPage: React.FC = () => {
 
   const [apiError, setApiError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [deletingParam, setDeletingParam] = useState<{ id: number; period: string } | null>(null);
 
   // Fetch live economic indicators (UF, UTM, Dólar, IPC) from backend proxy with fallback
   const {
@@ -147,10 +159,15 @@ export const MonthlyParametersPage: React.FC = () => {
     mutationFn: monthlyParametersService.delete,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['monthlyParameters'] });
+      toast.success('Parámetros del período eliminados correctamente');
+      setDeletingParam(null);
     },
     onError: (err: any) => {
       const message = err.response?.data?.message || 'Error al eliminar parámetros';
-      setApiError(Array.isArray(message) ? message.join(', ') : message);
+      const formatted = Array.isArray(message) ? message.join(', ') : message;
+      setApiError(formatted);
+      toast.error(formatted);
+      setDeletingParam(null);
     },
   });
 
@@ -172,9 +189,10 @@ export const MonthlyParametersPage: React.FC = () => {
     });
   };
 
-  const handleDelete = (id: number, period: string) => {
-    if (window.confirm(`¿Estás seguro de eliminar los parámetros del período ${period}?`)) {
-      deleteMutation.mutate(id);
+  const confirmDelete = () => {
+    if (deletingParam) {
+      setApiError(null);
+      deleteMutation.mutate(deletingParam.id);
     }
   };
 
@@ -505,20 +523,48 @@ export const MonthlyParametersPage: React.FC = () => {
                       <span>UTM: ${Number(param.utmValue).toLocaleString('es-CL')}</span>
                     </div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => handleDelete(param.id, param.periodYyyyMm)}
-                    className="p-1.5 text-rose-600 rounded-lg hover:bg-rose-50 transition-colors"
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setDeletingParam({ id: param.id, period: param.periodYyyyMm })}
+                    className="h-8 w-8 text-rose-600 hover:text-rose-700 hover:bg-rose-50"
                     title="Eliminar período"
                   >
                     <TrashIcon className="h-4 w-4" />
-                  </button>
+                  </Button>
                 </div>
               ))}
             </div>
           )}
         </div>
       </div>
+
+      {/* Shadcn AlertDialog for Deleting Monthly Parameters */}
+      <AlertDialog
+        open={!!deletingParam}
+        onOpenChange={(open) => !open && setDeletingParam(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Confirmar eliminación de período?</AlertDialogTitle>
+            <AlertDialogDescription>
+              ¿Estás seguro de que deseas eliminar permanentemente los parámetros del período{' '}
+              <strong className="text-[#37352F]">{deletingParam?.period}</strong>? Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteMutation.isPending}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? 'Eliminando...' : 'Sí, Eliminar'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

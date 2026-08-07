@@ -19,7 +19,7 @@ export function CustomSelect<
           }`,
         menu: () =>
           'absolute mt-1.5 w-full rounded-2xl border border-neutral-200/80 bg-white/95 p-1.5 shadow-xl backdrop-blur-2xl text-xs z-50 animate-in fade-in-0 zoom-in-95',
-        menuList: () => 'max-h-[200px] overflow-y-auto space-y-1 pr-1',
+        menuList: () => 'max-h-[200px] overflow-y-auto flex flex-col gap-1 pr-1',
         option: (state) =>
           `rounded-xl px-3 py-2 text-xs font-medium cursor-pointer transition-colors ${
             state.isSelected

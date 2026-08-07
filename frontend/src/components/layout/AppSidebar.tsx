@@ -1,5 +1,5 @@
-import React from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import React from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
   Users,
@@ -12,7 +12,9 @@ import {
   CreditCard,
   Building,
   Key,
-} from "lucide-react";
+} from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 import {
   Sidebar,
   SidebarHeader,
@@ -23,7 +25,7 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarRail,
-} from "../ui/sidebar";
+} from '@/components/ui/sidebar';
 
 export const AppSidebar: React.FC = () => {
   const navigate = useNavigate();
@@ -34,32 +36,43 @@ export const AppSidebar: React.FC = () => {
   return (
     <Sidebar collapsible="icon">
       {/* Brand Header */}
-      <SidebarHeader className="border-b border-neutral-200/60 pb-3">
-        <div className="flex items-center gap-3 px-1 py-1">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#37352F] text-white shadow-xs">
-            <TrendingUp className="h-5 w-5 text-amber-400" />
+      <SidebarHeader className="p-3">
+        <div className="flex items-center justify-between gap-2 px-1 py-1">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#37352F] text-white shadow-2xs">
+              <TrendingUp className="size-5 text-amber-400" />
+            </div>
+            <div className="flex flex-col min-w-0 group-data-[collapsible=icon]:hidden">
+              <span className="truncate text-xs font-bold text-[#37352F] tracking-tight">
+                Sistema Contable
+              </span>
+              <span className="truncate text-[10px] text-muted-foreground font-mono">
+                v2.0 Pro
+              </span>
+            </div>
           </div>
-          <div className="flex flex-col min-w-0 group-data-[collapsible=icon]:hidden">
-            <span className="text-xs font-bold text-[#37352F] truncate tracking-tight">
-              Sistema Contable
-            </span>
-            <span className="text-[10px] text-[#787774] font-mono">
-              v2.0 Pro
-            </span>
-          </div>
+
+          <Badge
+            variant="amber"
+            className="group-data-[collapsible=icon]:hidden shrink-0 text-[10px] px-1.5 py-0"
+          >
+            PRO
+          </Badge>
         </div>
       </SidebarHeader>
 
+      <Separator className="mx-2 w-auto" />
+
       {/* Navigation Content */}
-      <SidebarContent>
+      <SidebarContent className="px-2 py-2">
         {/* Principal */}
         <SidebarGroup>
           <SidebarGroupLabel>Principal</SidebarGroupLabel>
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton
-                isActive={pathname === "/home"}
-                onClick={() => navigate("/home")}
+                isActive={pathname === '/home'}
+                onClick={() => navigate('/home')}
                 tooltip="Inicio"
               >
                 <LayoutDashboard />
@@ -75,8 +88,8 @@ export const AppSidebar: React.FC = () => {
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton
-                isActive={pathname.startsWith("/workers")}
-                onClick={() => navigate("/settings/workers")}
+                isActive={pathname.startsWith('/workers')}
+                onClick={() => navigate('/workers')}
                 tooltip="Ficha Empleados"
               >
                 <Users />
@@ -86,9 +99,9 @@ export const AppSidebar: React.FC = () => {
 
             <SidebarMenuItem>
               <SidebarMenuButton
-                isActive={pathname.startsWith("/payrolls")}
-                onClick={() => navigate("/payrolls")}
-                tooltip="Liquidaciones"
+                isActive={pathname.startsWith('/payrolls')}
+                onClick={() => navigate('/payrolls')}
+                tooltip="Procesar Sueldos"
               >
                 <FileSpreadsheet />
                 <span>Procesar Sueldos</span>
@@ -97,9 +110,9 @@ export const AppSidebar: React.FC = () => {
 
             <SidebarMenuItem>
               <SidebarMenuButton
-                isActive={pathname.startsWith("/novelties")}
-                onClick={() => navigate("/novelties")}
-                tooltip="Novedades"
+                isActive={pathname.startsWith('/novelties')}
+                onClick={() => navigate('/novelties')}
+                tooltip="Novedades del Mes"
               >
                 <Receipt />
                 <span>Novedades del Mes</span>
@@ -108,8 +121,8 @@ export const AppSidebar: React.FC = () => {
 
             <SidebarMenuItem>
               <SidebarMenuButton
-                isActive={pathname.startsWith("/lre")}
-                onClick={() => navigate("/lre")}
+                isActive={pathname.startsWith('/lre')}
+                onClick={() => navigate('/lre')}
                 tooltip="Libro LRE"
               >
                 <BookOpen />
@@ -125,9 +138,9 @@ export const AppSidebar: React.FC = () => {
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton
-                isActive={pathname.startsWith("/reports/previred")}
-                onClick={() => navigate("/reports/previred")}
-                tooltip="PreviRed"
+                isActive={pathname.startsWith('/reports/previred')}
+                onClick={() => navigate('/reports/previred')}
+                tooltip="PreviRed (.txt)"
               >
                 <FileText />
                 <span>PreviRed (.txt)</span>
@@ -136,8 +149,8 @@ export const AppSidebar: React.FC = () => {
 
             <SidebarMenuItem>
               <SidebarMenuButton
-                isActive={pathname.startsWith("/reports/bank-transfers")}
-                onClick={() => navigate("/reports/bank-transfers")}
+                isActive={pathname.startsWith('/reports/bank-transfers')}
+                onClick={() => navigate('/reports/bank-transfers')}
                 tooltip="Pago Masivo Bancos"
               >
                 <CreditCard />
@@ -153,8 +166,8 @@ export const AppSidebar: React.FC = () => {
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton
-                isActive={pathname.startsWith("/settings/parameters")}
-                onClick={() => navigate("/settings/parameters")}
+                isActive={pathname.startsWith('/settings/parameters')}
+                onClick={() => navigate('/settings/parameters')}
                 tooltip="Parámetros Mensuales"
               >
                 <Sliders />
@@ -164,8 +177,8 @@ export const AppSidebar: React.FC = () => {
 
             <SidebarMenuItem>
               <SidebarMenuButton
-                isActive={pathname.startsWith("/settings/companies")}
-                onClick={() => navigate("/settings/companies")}
+                isActive={pathname.startsWith('/settings/companies')}
+                onClick={() => navigate('/settings/companies')}
                 tooltip="Empresas & Sucursales"
               >
                 <Building />
@@ -175,8 +188,8 @@ export const AppSidebar: React.FC = () => {
 
             <SidebarMenuItem>
               <SidebarMenuButton
-                isActive={pathname.startsWith("/settings/sii-certificate")}
-                onClick={() => navigate("/settings/sii-certificate")}
+                isActive={pathname.startsWith('/settings/sii-certificate')}
+                onClick={() => navigate('/settings/sii-certificate')}
                 tooltip="Certificado Digital SII"
               >
                 <Key />

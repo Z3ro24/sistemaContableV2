@@ -219,9 +219,9 @@ const App = () => {
             {/* ⚙️ Configuración & Sistema */}
             <Route
               path="/settings"
-              element={<Navigate to="/settings/workers" replace />}
+              element={<Navigate to="/workers" replace />}
             />
-            <Route path="/settings/workers" element={<WorkersPage />} />
+            <Route path="/workers" element={<WorkersPage />} />
             <Route
               path="/settings/workers/edit/:id"
               element={<EditWorkerPage />}

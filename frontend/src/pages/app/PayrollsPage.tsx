@@ -31,6 +31,16 @@ import {
 } from "../../utils/massExportUtils";
 
 import { useAppSelector } from "../../store/store";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "../../components/ui/alert-dialog";
 
 interface SelectOption {
   value: string;
@@ -43,6 +53,7 @@ export const PayrollsPage: React.FC = () => {
 
   const [isCalcModalOpen, setIsCalcModalOpen] = useState(false);
   const [isBankModalOpen, setIsBankModalOpen] = useState(false);
+  const [deletingPayroll, setDeletingPayroll] = useState<{ id: number; workerName: string; period: string } | null>(null);
   const [selectedPayroll, setSelectedPayroll] = useState<Payroll | null>(null);
   const [pdfModalPayroll, setPdfModalPayroll] = useState<Payroll | null>(null);
 
@@ -181,6 +192,7 @@ export const PayrollsPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["payrolls"] });
       toast.success("Liquidación eliminada exitosamente");
+      setDeletingPayroll(null);
     },
     onError: (err: any) => {
       const message =
@@ -188,6 +200,7 @@ export const PayrollsPage: React.FC = () => {
       const errorStr = Array.isArray(message) ? message.join(", ") : message;
       setPageApiError(errorStr);
       toast.error(errorStr);
+      setDeletingPayroll(null);
     },
   });
 
@@ -206,14 +219,10 @@ export const PayrollsPage: React.FC = () => {
     });
   };
 
-  const handleDelete = (id: number, workerName: string, period: string) => {
-    if (
-      window.confirm(
-        `¿Estás seguro de eliminar la liquidación de ${workerName} (${period})?`,
-      )
-    ) {
+  const confirmDelete = () => {
+    if (deletingPayroll) {
       setPageApiError(null);
-      deleteMutation.mutate(id);
+      deleteMutation.mutate(deletingPayroll.id);
     }
   };
 
@@ -483,11 +492,11 @@ export const PayrollsPage: React.FC = () => {
                       <button
                         type="button"
                         onClick={() =>
-                          handleDelete(
-                            payroll.id,
-                            payroll.worker.name,
-                            payroll.periodYyyyMm,
-                          )
+                          setDeletingPayroll({
+                            id: payroll.id,
+                            workerName: payroll.worker.name,
+                            period: payroll.periodYyyyMm,
+                          })
                         }
                         title="Eliminar Liquidación"
                         className="rounded-lg p-1.5 border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 transition-colors shadow-2xs"
@@ -754,6 +763,34 @@ export const PayrollsPage: React.FC = () => {
         payrolls={payrolls}
         companyName={getSelectedCompanyName()}
       />
+
+      {/* Shadcn AlertDialog for Deleting Payroll */}
+      <AlertDialog
+        open={!!deletingPayroll}
+        onOpenChange={(open) => !open && setDeletingPayroll(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Confirmar eliminación de liquidación?</AlertDialogTitle>
+            <AlertDialogDescription>
+              ¿Estás seguro de eliminar la liquidación de{' '}
+              <strong className="text-[#37352F]">{deletingPayroll?.workerName}</strong> correspondiente al período{' '}
+              <strong className="text-[#37352F]">{deletingPayroll?.period}</strong>? Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteMutation.isPending}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? 'Eliminando...' : 'Sí, Eliminar'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

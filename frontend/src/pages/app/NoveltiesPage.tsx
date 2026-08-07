@@ -14,6 +14,16 @@ import noveltiesService, { type MonthlyNoveltyData } from '../../services/novelt
 import AlertBanner from '../../components/common/AlertBanner';
 import NoveltyModal from '../../components/modals/NoveltyModal';
 import { useAppSelector } from '../../store/store';
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from '../../components/ui/alert-dialog';
 
 export const NoveltiesPage: React.FC = () => {
   const queryClient = useQueryClient();
@@ -334,34 +344,31 @@ export const NoveltiesPage: React.FC = () => {
         );
       })()}
 
-      {/* Delete Confirmation Dialog */}
-      {deletingId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-xs">
-          <div className="w-full max-w-md rounded-3xl border border-white/80 bg-white p-6 shadow-2xl space-y-4">
-            <h3 className="text-base font-bold text-[#37352F]">¿Eliminar registro de novedad?</h3>
-            <p className="text-xs text-[#787774]">
-              Esta acción eliminará de forma permanente la novedad del trabajador para este período.
-            </p>
-            <div className="flex justify-end gap-3 pt-2">
-              <button
-                type="button"
-                onClick={() => setDeletingId(null)}
-                className="rounded-xl border border-neutral-300 bg-white px-4 py-2 text-xs font-semibold text-[#37352F] hover:bg-neutral-50 transition-colors"
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                disabled={deleteMutation.isPending}
-                onClick={() => handleDeleteConfirm(deletingId)}
-                className="rounded-xl bg-rose-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-rose-700 transition-colors disabled:opacity-50"
-              >
-                {deleteMutation.isPending ? 'Eliminando...' : 'Sí, Eliminar'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Shadcn AlertDialog for Deleting Novelty */}
+      <AlertDialog
+        open={!!deletingId}
+        onOpenChange={(open) => !open && setDeletingId(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar registro de novedad?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción eliminará de forma permanente la novedad del trabajador para este período. No se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteMutation.isPending}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deletingId && handleDeleteConfirm(deletingId)}
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? 'Eliminando...' : 'Sí, Eliminar'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
