@@ -1,17 +1,18 @@
-import React from 'react';
-import { Outlet } from 'react-router-dom';
-import { Toaster } from '../components/ui/sonner';
-import AppSidebar from '../components/layout/AppSidebar';
-import Navbar from '../components/layout/Navbar';
-import Breadcrumbs from '../components/common/Breadcrumbs';
-import { SidebarProvider, SidebarInset } from '../components/ui/sidebar';
+import React from "react";
+import { Outlet } from "react-router-dom";
+import { Toaster } from "../components/ui/sonner";
+import AppSidebar from "../components/layout/AppSidebar";
+import Navbar from "../components/layout/Navbar";
+import Breadcrumbs from "../components/common/Breadcrumbs";
+import { SidebarProvider, SidebarInset } from "../components/ui/sidebar";
 
 export const AppLayout: React.FC = () => {
   return (
     <SidebarProvider defaultOpen={true}>
       <div className="flex h-screen w-screen overflow-hidden bg-[#F7F7F5] selection:bg-neutral-200">
         {/* Global Top-Center React Sonner Toaster */}
-        <Toaster position="top-center" richColors closeButton />
+        <Toaster position="top-center" />
+        {/* <Toaster position="top-center" richColors /> */}
 
         {/* Background Soft Notion Glass Ambient Orbs */}
         <div className="pointer-events-none fixed inset-0 flex items-center justify-center overflow-hidden">

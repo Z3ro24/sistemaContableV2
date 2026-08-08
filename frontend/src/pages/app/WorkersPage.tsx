@@ -11,7 +11,7 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
 } from "@heroicons/react/24/outline";
-import { toast } from "sonner";
+import { toast } from "../../components/ui/sonner";
 import workersService from "../../services/workersService";
 import WorkerModal from "../../components/modals/WorkerModal";
 import AlertBanner from "../../components/common/AlertBanner";
@@ -43,6 +43,7 @@ export const WorkersPage: React.FC = () => {
     id: number;
     name: string;
   } | null>(null);
+  const [isTestDialogOpen, setIsTestDialogOpen] = useState(false);
 
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -134,13 +135,35 @@ export const WorkersPage: React.FC = () => {
           </div>
         </div>
 
-        <Button
-          onClick={() => setIsModalOpen(true)}
-          className="h-11 px-5 rounded-2xl bg-[#37352F] hover:bg-[#201F1C] text-white font-semibold text-xs shadow-md"
-        >
-          <PlusIcon className="h-4 w-4 mr-2" />
-          Nuevo Empleado
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={() =>
+              toast.warning(
+                "¡Toast de Sonner (shadcn/ui) funcionando con éxito!",
+              )
+            }
+            className="h-11 px-4 rounded-2xl border-neutral-300 text-xs font-semibold"
+          >
+            Prueba Toast
+          </Button>
+
+          <Button
+            variant="outline"
+            onClick={() => setIsTestDialogOpen(true)}
+            className="h-11 px-4 rounded-2xl border-neutral-300 text-xs font-semibold"
+          >
+            Prueba Dialog
+          </Button>
+
+          <Button
+            onClick={() => setIsModalOpen(true)}
+            className="h-11 px-5 rounded-2xl bg-[#37352F] hover:bg-[#201F1C] text-white font-semibold text-xs shadow-md"
+          >
+            <PlusIcon className="h-4 w-4 mr-2" />
+            Nuevo Empleado
+          </Button>
+        </div>
       </div>
 
       {apiError && <AlertBanner type="error" message={apiError} />}
@@ -312,6 +335,30 @@ export const WorkersPage: React.FC = () => {
               disabled={deleteMutation.isPending}
             >
               {deleteMutation.isPending ? "Eliminando..." : "Sí, Eliminar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      {/* Test Shadcn AlertDialog */}
+      <AlertDialog open={isTestDialogOpen} onOpenChange={setIsTestDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Modal Dialog de Prueba (shadcn/ui)
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Este es un AlertDialog oficial de shadcn/ui. Cuenta con fondo
+              opaco, efecto blur de fondo y notificaciones conectadas.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cerrar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() =>
+                toast.success("¡Acción confirmada desde el Dialog de prueba!")
+              }
+            >
+              Confirmar Prueba
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
