@@ -137,26 +137,6 @@ export const WorkersPage: React.FC = () => {
 
         <div className="flex flex-wrap items-center gap-2">
           <Button
-            variant="outline"
-            onClick={() =>
-              toast.warning(
-                "¡Toast de Sonner (shadcn/ui) funcionando con éxito!",
-              )
-            }
-            className="h-11 px-4 rounded-2xl border-neutral-300 text-xs font-semibold"
-          >
-            Prueba Toast
-          </Button>
-
-          <Button
-            variant="outline"
-            onClick={() => setIsTestDialogOpen(true)}
-            className="h-11 px-4 rounded-2xl border-neutral-300 text-xs font-semibold"
-          >
-            Prueba Dialog
-          </Button>
-
-          <Button
             onClick={() => setIsModalOpen(true)}
             className="h-11 px-5 rounded-2xl bg-[#37352F] hover:bg-[#201F1C] text-white font-semibold text-xs shadow-md"
           >
@@ -335,30 +315,6 @@ export const WorkersPage: React.FC = () => {
               disabled={deleteMutation.isPending}
             >
               {deleteMutation.isPending ? "Eliminando..." : "Sí, Eliminar"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-      {/* Test Shadcn AlertDialog */}
-      <AlertDialog open={isTestDialogOpen} onOpenChange={setIsTestDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              Modal Dialog de Prueba (shadcn/ui)
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              Este es un AlertDialog oficial de shadcn/ui. Cuenta con fondo
-              opaco, efecto blur de fondo y notificaciones conectadas.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cerrar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() =>
-                toast.success("¡Acción confirmada desde el Dialog de prueba!")
-              }
-            >
-              Confirmar Prueba
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -1,16 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeftIcon, UserGroupIcon } from '@heroicons/react/24/outline';
-import { Save } from 'lucide-react';
-import { toast } from 'sonner';
-import workersService from '../../services/workersService';
-import companiesService from '../../services/companiesService';
-import catalogsService from '../../services/catalogsService';
-import { formatRut, validateRut } from '../../utils/rutUtils';
-import { workerSchema } from '../../validators/workerValidator';
-import AlertBanner from '../../components/common/AlertBanner';
-import CustomSelect from '../../components/common/CustomSelect';
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { ArrowLeftIcon, UserGroupIcon } from "@heroicons/react/24/outline";
+import { Save } from "lucide-react";
+import { toast } from "sonner";
+import workersService from "../../services/workersService";
+import companiesService from "../../services/companiesService";
+import catalogsService from "../../services/catalogsService";
+import { formatRut, validateRut } from "../../utils/rutUtils";
+import { workerSchema } from "../../validators/workerValidator";
+import AlertBanner from "../../components/common/AlertBanner";
+import CustomSelect from "../../components/common/CustomSelect";
 
 interface SelectOption {
   value: string;
@@ -18,10 +18,10 @@ interface SelectOption {
 }
 
 const bankAccountTypeOptions: SelectOption[] = [
-  { value: '', label: '-- Seleccionar Tipo de Cuenta --' },
-  { value: 'Cuenta Vista / RUT', label: 'Cuenta Vista / RUT' },
-  { value: 'Cuenta Corriente', label: 'Cuenta Corriente' },
-  { value: 'Cuenta de Ahorro', label: 'Cuenta de Ahorro' },
+  { value: "", label: "-- Seleccionar Tipo de Cuenta --" },
+  { value: "Cuenta Vista / RUT", label: "Cuenta Vista / RUT" },
+  { value: "Cuenta Corriente", label: "Cuenta Corriente" },
+  { value: "Cuenta de Ahorro", label: "Cuenta de Ahorro" },
 ];
 
 export const EditWorkerPage: React.FC = () => {
@@ -31,116 +31,140 @@ export const EditWorkerPage: React.FC = () => {
 
   const workerId = id ? parseInt(id, 10) : 0;
 
-  const [name, setName] = useState('');
-  const [paternalLastName, setPaternalLastName] = useState('');
-  const [maternalLastName, setMaternalLastName] = useState('');
-  const [rut, setRut] = useState('');
-  const [entryDate, setEntryDate] = useState('');
-  const [baseSalary, setBaseSalary] = useState('');
+  const [name, setName] = useState("");
+  const [paternalLastName, setPaternalLastName] = useState("");
+  const [maternalLastName, setMaternalLastName] = useState("");
+  const [rut, setRut] = useState("");
+  const [entryDate, setEntryDate] = useState("");
+  const [baseSalary, setBaseSalary] = useState("");
 
-  const [companyId, setCompanyId] = useState('');
-  const [afpId, setAfpId] = useState('');
-  const [healthInstitutionId, setHealthInstitutionId] = useState('');
-  const [healthAgreedUf, setHealthAgreedUf] = useState('');
-  const [contractTypeId, setContractTypeId] = useState('');
-  const [bankId, setBankId] = useState('');
-  const [bankAccountType, setBankAccountType] = useState('');
-  const [bankAccountNumber, setBankAccountNumber] = useState('');
+  const [companyId, setCompanyId] = useState("");
+  const [afpId, setAfpId] = useState("");
+  const [healthInstitutionId, setHealthInstitutionId] = useState("");
+  const [healthAgreedUf, setHealthAgreedUf] = useState("");
+  const [contractTypeId, setContractTypeId] = useState("");
+  const [bankId, setBankId] = useState("");
+  const [bankAccountType, setBankAccountType] = useState("");
+  const [bankAccountNumber, setBankAccountNumber] = useState("");
 
-  const [rutError, setRutError] = useState('');
+  const [rutError, setRutError] = useState("");
   const [apiError, setApiError] = useState<string | null>(null);
 
   // Fetch worker details
-  const { data: worker, isLoading, isError } = useQuery({
-    queryKey: ['worker', workerId],
+  const {
+    data: worker,
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: ["worker", workerId],
     queryFn: () => workersService.getById(workerId),
     enabled: !!workerId,
   });
 
   // Fetch companies
   const { data: companies = [] } = useQuery({
-    queryKey: ['companies'],
+    queryKey: ["companies"],
     queryFn: companiesService.getAll,
   });
 
   // Fetch Catalogs
   const { data: afps = [] } = useQuery({
-    queryKey: ['afps'],
+    queryKey: ["afps"],
     queryFn: catalogsService.getAfps,
   });
 
   const { data: healthInstitutions = [] } = useQuery({
-    queryKey: ['healthInstitutions'],
+    queryKey: ["healthInstitutions"],
     queryFn: catalogsService.getHealthInstitutions,
   });
 
   const { data: contractTypes = [] } = useQuery({
-    queryKey: ['contractTypes'],
+    queryKey: ["contractTypes"],
     queryFn: catalogsService.getContractTypes,
   });
 
   const { data: banks = [] } = useQuery({
-    queryKey: ['banks'],
+    queryKey: ["banks"],
     queryFn: catalogsService.getBanks,
   });
 
   // Select options
   const companyOptions: SelectOption[] = [
-    { value: '', label: '-- Sin Empresa Asignada --' },
-    ...companies.map((c) => ({ value: c.id.toString(), label: `${c.name} (${c.rutCompany})` })),
+    { value: "", label: "-- Sin Empresa Asignada --" },
+    ...companies.map((c) => ({
+      value: c.id.toString(),
+      label: `${c.name} (${c.rutCompany})`,
+    })),
   ];
 
   const afpOptions: SelectOption[] = [
-    { value: '', label: '-- Seleccionar AFP --' },
-    ...afps.map((a) => ({ value: a.id.toString(), label: `${a.name} (${a.commissionRate}%)` })),
+    { value: "", label: "-- Seleccionar AFP --" },
+    ...afps.map((a) => ({
+      value: a.id.toString(),
+      label: `${a.name} (${a.commissionRate}%)`,
+    })),
   ];
 
   const healthOptions: SelectOption[] = [
-    { value: '', label: '-- Seleccionar Salud --' },
-    ...healthInstitutions.map((h) => ({ value: h.id.toString(), label: `${h.name} ${h.isIsapre ? '(Isapre)' : '(Fonasa)'}` })),
+    { value: "", label: "-- Seleccionar Salud --" },
+    ...healthInstitutions.map((h) => ({
+      value: h.id.toString(),
+      label: `${h.name} ${h.isIsapre ? "(Isapre)" : "(Fonasa)"}`,
+    })),
   ];
 
   const contractOptions: SelectOption[] = [
-    { value: '', label: '-- Seleccionar Tipo Contrato --' },
+    { value: "", label: "-- Seleccionar Tipo Contrato --" },
     ...contractTypes.map((ct) => ({ value: ct.id.toString(), label: ct.name })),
   ];
 
   const bankOptions: SelectOption[] = [
-    { value: '', label: '-- Seleccionar Banco --' },
+    { value: "", label: "-- Seleccionar Banco --" },
     ...banks.map((b) => ({ value: b.id.toString(), label: b.name })),
   ];
 
   // Populate form fields
   useEffect(() => {
     if (worker) {
-      setName(worker.name || '');
-      setPaternalLastName(worker.paternalLastName || '');
-      setMaternalLastName(worker.maternalLastName || '');
-      setRut(worker.rut || '');
-      setEntryDate(worker.entryDate ? new Date(worker.entryDate).toISOString().split('T')[0] : '');
-      setBaseSalary(worker.baseSalary ? worker.baseSalary.toString() : '');
-      setCompanyId(worker.companyId ? worker.companyId.toString() : '');
-      setAfpId(worker.afpId ? worker.afpId.toString() : '');
-      setHealthInstitutionId(worker.healthInstitutionId ? worker.healthInstitutionId.toString() : '');
-      setHealthAgreedUf(worker.healthAgreedUf ? worker.healthAgreedUf.toString() : '');
-      setContractTypeId(worker.contractTypeId ? worker.contractTypeId.toString() : '');
-      setBankId(worker.bankId ? worker.bankId.toString() : '');
-      setBankAccountType(worker.bankAccountType || '');
-      setBankAccountNumber(worker.bankAccountNumber || '');
+      setName(worker.name || "");
+      setPaternalLastName(worker.paternalLastName || "");
+      setMaternalLastName(worker.maternalLastName || "");
+      setRut(worker.rut || "");
+      setEntryDate(
+        worker.entryDate
+          ? new Date(worker.entryDate).toISOString().split("T")[0]
+          : "",
+      );
+      setBaseSalary(worker.baseSalary ? worker.baseSalary.toString() : "");
+      setCompanyId(worker.companyId ? worker.companyId.toString() : "");
+      setAfpId(worker.afpId ? worker.afpId.toString() : "");
+      setHealthInstitutionId(
+        worker.healthInstitutionId ? worker.healthInstitutionId.toString() : "",
+      );
+      setHealthAgreedUf(
+        worker.healthAgreedUf ? worker.healthAgreedUf.toString() : "",
+      );
+      setContractTypeId(
+        worker.contractTypeId ? worker.contractTypeId.toString() : "",
+      );
+      setBankId(worker.bankId ? worker.bankId.toString() : "");
+      setBankAccountType(worker.bankAccountType || "");
+      setBankAccountNumber(worker.bankAccountNumber || "");
     }
   }, [worker]);
 
   const updateMutation = useMutation({
     mutationFn: (payload: any) => workersService.update(workerId, payload),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['workers'] });
-      queryClient.invalidateQueries({ queryKey: ['worker', workerId] });
-      toast.success('Ficha del empleado actualizada con éxito');
-      navigate('/settings/workers');
+      queryClient.invalidateQueries({ queryKey: ["workers"] });
+      queryClient.invalidateQueries({ queryKey: ["worker", workerId] });
+      toast.success("Ficha del empleado actualizada con éxito");
+      navigate("/workers");
     },
     onError: (err: any) => {
-      const message = err.response?.data?.message || 'Error al actualizar la persona';
-      const errorStr = Array.isArray(message) ? message.join(', ') : message;
+      const message =
+        err.response?.data?.message || "Error al actualizar la persona";
+      const errorStr = Array.isArray(message) ? message.join(", ") : message;
       setApiError(errorStr);
       toast.error(errorStr);
     },
@@ -150,14 +174,14 @@ export const EditWorkerPage: React.FC = () => {
     const formatted = formatRut(e.target.value);
     setRut(formatted);
     if (rutError && validateRut(formatted)) {
-      setRutError('');
+      setRutError("");
     }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setApiError(null);
-    setRutError('');
+    setRutError("");
 
     const validationResult = workerSchema.safeParse({
       name,
@@ -186,7 +210,9 @@ export const EditWorkerPage: React.FC = () => {
       baseSalary: baseSalary ? parseFloat(baseSalary) : 0,
       companyId: companyId ? parseInt(companyId, 10) : null,
       afpId: afpId ? parseInt(afpId, 10) : null,
-      healthInstitutionId: healthInstitutionId ? parseInt(healthInstitutionId, 10) : null,
+      healthInstitutionId: healthInstitutionId
+        ? parseInt(healthInstitutionId, 10)
+        : null,
       healthAgreedUf: healthAgreedUf ? parseFloat(healthAgreedUf) : 0,
       contractTypeId: contractTypeId ? parseInt(contractTypeId, 10) : null,
       bankId: bankId ? parseInt(bankId, 10) : null,
@@ -196,16 +222,23 @@ export const EditWorkerPage: React.FC = () => {
   };
 
   if (isLoading) {
-    return <div className="p-8 text-center text-sm text-[#787774]">Cargando datos de la persona...</div>;
+    return (
+      <div className="p-8 text-center text-sm text-[#787774]">
+        Cargando datos de la persona...
+      </div>
+    );
   }
 
   if (isError || !worker) {
     return (
       <div className="space-y-4 max-w-5xl">
-        <AlertBanner type="error" message="No se pudo encontrar la persona seleccionada." />
+        <AlertBanner
+          type="error"
+          message="No se pudo encontrar la persona seleccionada."
+        />
         <button
           type="button"
-          onClick={() => navigate('/settings/workers')}
+          onClick={() => navigate("/workers")}
           className="rounded-xl border border-neutral-200 bg-white px-4 py-2 text-xs font-semibold text-[#37352F] shadow-2xs hover:bg-neutral-50"
         >
           Volver a Personas
@@ -220,7 +253,7 @@ export const EditWorkerPage: React.FC = () => {
       <div className="flex items-center justify-between gap-4">
         <button
           type="button"
-          onClick={() => navigate('/settings/workers')}
+          onClick={() => navigate("/workers")}
           className="flex items-center gap-2 rounded-xl border border-neutral-200/80 bg-white/80 px-3 py-1.5 text-xs font-medium text-[#37352F] shadow-2xs backdrop-blur-md hover:bg-neutral-100 transition-colors"
         >
           <ArrowLeftIcon className="h-4 w-4" />
@@ -298,12 +331,16 @@ export const EditWorkerPage: React.FC = () => {
                   maxLength={12}
                   className={`w-full rounded-xl border px-3 py-2 text-xs text-[#37352F] shadow-2xs focus:outline-none focus:ring-1 ${
                     rutError
-                      ? 'border-rose-400 focus:border-rose-500 focus:ring-rose-500'
-                      : 'border-neutral-200 focus:border-[#37352F] focus:ring-[#37352F]'
+                      ? "border-rose-400 focus:border-rose-500 focus:ring-rose-500"
+                      : "border-neutral-200 focus:border-[#37352F] focus:ring-[#37352F]"
                   }`}
                   required
                 />
-                {rutError && <p className="mt-1 text-xs text-rose-600 font-medium">{rutError}</p>}
+                {rutError && (
+                  <p className="mt-1 text-xs text-rose-600 font-medium">
+                    {rutError}
+                  </p>
+                )}
               </div>
               <div>
                 <label className="block text-[11px] font-semibold text-[#787774] mb-1">
@@ -311,8 +348,11 @@ export const EditWorkerPage: React.FC = () => {
                 </label>
                 <CustomSelect<SelectOption>
                   options={companyOptions}
-                  value={companyOptions.find((o) => o.value === companyId) || companyOptions[0]}
-                  onChange={(opt) => setCompanyId(opt?.value || '')}
+                  value={
+                    companyOptions.find((o) => o.value === companyId) ||
+                    companyOptions[0]
+                  }
+                  onChange={(opt) => setCompanyId(opt?.value || "")}
                 />
               </div>
             </div>
@@ -353,8 +393,11 @@ export const EditWorkerPage: React.FC = () => {
                 </label>
                 <CustomSelect<SelectOption>
                   options={contractOptions}
-                  value={contractOptions.find((o) => o.value === contractTypeId) || contractOptions[0]}
-                  onChange={(opt) => setContractTypeId(opt?.value || '')}
+                  value={
+                    contractOptions.find((o) => o.value === contractTypeId) ||
+                    contractOptions[0]
+                  }
+                  onChange={(opt) => setContractTypeId(opt?.value || "")}
                 />
               </div>
             </div>
@@ -366,8 +409,10 @@ export const EditWorkerPage: React.FC = () => {
                 </label>
                 <CustomSelect<SelectOption>
                   options={afpOptions}
-                  value={afpOptions.find((o) => o.value === afpId) || afpOptions[0]}
-                  onChange={(opt) => setAfpId(opt?.value || '')}
+                  value={
+                    afpOptions.find((o) => o.value === afpId) || afpOptions[0]
+                  }
+                  onChange={(opt) => setAfpId(opt?.value || "")}
                 />
               </div>
               <div>
@@ -376,8 +421,12 @@ export const EditWorkerPage: React.FC = () => {
                 </label>
                 <CustomSelect<SelectOption>
                   options={healthOptions}
-                  value={healthOptions.find((o) => o.value === healthInstitutionId) || healthOptions[0]}
-                  onChange={(opt) => setHealthInstitutionId(opt?.value || '')}
+                  value={
+                    healthOptions.find(
+                      (o) => o.value === healthInstitutionId,
+                    ) || healthOptions[0]
+                  }
+                  onChange={(opt) => setHealthInstitutionId(opt?.value || "")}
                 />
               </div>
               <div>
@@ -408,8 +457,11 @@ export const EditWorkerPage: React.FC = () => {
                 </label>
                 <CustomSelect<SelectOption>
                   options={bankOptions}
-                  value={bankOptions.find((o) => o.value === bankId) || bankOptions[0]}
-                  onChange={(opt) => setBankId(opt?.value || '')}
+                  value={
+                    bankOptions.find((o) => o.value === bankId) ||
+                    bankOptions[0]
+                  }
+                  onChange={(opt) => setBankId(opt?.value || "")}
                 />
               </div>
               <div>
@@ -418,8 +470,12 @@ export const EditWorkerPage: React.FC = () => {
                 </label>
                 <CustomSelect<SelectOption>
                   options={bankAccountTypeOptions}
-                  value={bankAccountTypeOptions.find((o) => o.value === bankAccountType) || bankAccountTypeOptions[0]}
-                  onChange={(opt) => setBankAccountType(opt?.value || '')}
+                  value={
+                    bankAccountTypeOptions.find(
+                      (o) => o.value === bankAccountType,
+                    ) || bankAccountTypeOptions[0]
+                  }
+                  onChange={(opt) => setBankAccountType(opt?.value || "")}
                 />
               </div>
               <div>
@@ -441,7 +497,7 @@ export const EditWorkerPage: React.FC = () => {
           <div className="flex items-center justify-end gap-3 pt-4 border-t border-neutral-200/60 mt-6">
             <button
               type="button"
-              onClick={() => navigate('/settings/workers')}
+              onClick={() => navigate("/workers")}
               className="rounded-xl border border-neutral-200 bg-white px-4 py-2 text-xs font-medium text-[#37352F] shadow-2xs hover:bg-neutral-50"
             >
               Cancelar
@@ -452,7 +508,9 @@ export const EditWorkerPage: React.FC = () => {
               className="flex items-center gap-2 rounded-xl bg-[#37352F] px-5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-[#201F1C] disabled:opacity-50"
             >
               <Save className="h-4 w-4 text-emerald-400" />
-              <span>{updateMutation.isPending ? 'Guardando...' : 'Guardar Cambios'}</span>
+              <span>
+                {updateMutation.isPending ? "Guardando..." : "Guardar Cambios"}
+              </span>
             </button>
           </div>
         </form>
