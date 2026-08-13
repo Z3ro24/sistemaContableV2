@@ -13,6 +13,9 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     if (!PrismaService.pool) {
       PrismaService.pool = new Pool({
         connectionString: process.env.DATABASE_URL,
+        max: 20,
+        idleTimeoutMillis: 30000,
+        connectionTimeoutMillis: 5000,
       });
       PrismaService.adapter = new PrismaPg(PrismaService.pool);
     }

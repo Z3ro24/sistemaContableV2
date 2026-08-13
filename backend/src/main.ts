@@ -1,4 +1,13 @@
 import 'dotenv/config';
+
+// Suppress pg driver adapter deprecation warning on concurrent query execution
+process.on('warning', (warning) => {
+  if (warning.name === 'DeprecationWarning' && warning.message.includes('client.query()')) {
+    return;
+  }
+  console.warn(warning);
+});
+
 import { NestFactory, HttpAdapterHost } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { NestExpressApplication } from '@nestjs/platform-express';
@@ -32,16 +41,6 @@ async function bootstrap() {
     throw new Error('COOKIE_SECRET environment variable is missing in .env');
   }
   app.use(cookieParser(cookieSecret));
-
-  // Debug middleware for inspecting CSRF headers and cookies
-  app.use((req: any, res: any, next: any) => {
-    if (req.method !== 'GET') {
-      // console.log(`[CSRF Debug] ${req.method} ${req.url}`);
-      // console.log(`[CSRF Debug] req.cookies:`, req.cookies);
-      // console.log(`[CSRF Debug] x-csrf-token header:`, req.headers['x-csrf-token']);
-    }
-    next();
-  });
 
   // Enable Double Submit Cookie CSRF Protection
   app.use(doubleCsrfProtection);

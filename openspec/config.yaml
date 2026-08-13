@@ -1,10 +1,28 @@
 name: Backend Login Template
 
 description: >
-  Plantilla reutilizable para desarrollar aplicaciones Full Stack con
-  autenticación. Incluye Login, Registro, JWT, Refresh Tokens,
-  autorización basada en roles y una arquitectura escalable siguiendo
-  Specification Driven Development (SDD).
+  Contability sistem using Specification Driven Development (SDD).
+
+agent:
+  priority:
+    - User prompt
+    - Proposal
+    - Tasks
+    - Specs
+    - config.yaml
+
+agentRules:
+  - ALWAYS follow proposal.md, tasks.md and specs before implementing.
+  - ALWAYS present a plan for non-trivial work.
+  - ALWAYS ask before installing dependencies.
+  - ALWAYS create unit tests for every new service.
+  - ALWAYS create controller tests when applicable.
+  - ALWAYS create e2e tests for new endpoints when applicable.
+  - ALWAYS run lint and tests before considering a task complete.
+  - NEVER finish a task if lint or tests fail.
+  - NEVER use any unless explicitly justified.
+  - NEVER hardcode secrets.
+  - NEVER break the existing architecture.
 
 stack:
   frontend:
@@ -15,24 +33,26 @@ stack:
     forms: React Hook Form
     validation: Zod
     http: Axios
-    design:
+    packageManager: pnpm
+    styling:
       - TailwindCSS
-      - HeadlessUI
-      - Responsive Design
+      - Shadcn UI
+      - Responsive
       - Mobile First
-      - Lucide
       - Dark Mode
+      - Lucide Icons
 
   backend:
     framework: NestJS
-    language: TypeScript
     runtime: Node.js 22
+    language: TypeScript
     orm: Prisma
-    authentication:
+    auth:
       - JWT
       - Refresh Token
-      - Bcrypt
+      - bcrypt
     validation: class-validator
+    packageManager: pnpm
 
   database:
     engine: PostgreSQL
@@ -41,49 +61,27 @@ stack:
     docker: true
     dockerCompose: true
 
-  testing:
-    frontend: Vitest
-    backend: Jest
-
 commands:
   frontend:
     dev: pnpm run dev
     build: pnpm run build
-    test: pnpm run test
     lint: pnpm run lint
-
+    test: pnpm run test
   backend:
     dev: pnpm run start:dev
     build: pnpm run build
-    test: pnpm run test
     lint: pnpm run lint
+    test: pnpm run test
 
 architecture:
   style: Feature First
-
-  backend:
-    folders:
-      - src/auth
-      - src/users
-      - src/common
-      - src/config
-      - src/database
-
-    principles:
-      - SOLID
-      - Separation of Concerns
-      - Dependency Injection
-      - Clean Architecture cuando aporte valor
-
-  frontend:
-    folders:
-      - src/features
-      - src/components
-      - src/pages
-      - src/hooks
-      - src/services
-      - src/routes
-      - src/shared
+  principles:
+    - SOLID
+    - DRY
+    - KISS
+    - Separation of Concerns
+    - Dependency Injection
+    - Clean Architecture when it adds value
 
 projectStructure:
   root:
@@ -92,11 +90,12 @@ projectStructure:
     - docker/
     - .openspec/
     - docker-compose.yml
-    - README.md
 
 codingStandards:
   language: English
-
+  typescript:
+    strict: true
+    allowAny: false
   naming:
     variables: camelCase
     functions: camelCase
@@ -104,67 +103,52 @@ codingStandards:
     interfaces: PascalCase
     files: kebab-case
 
-  typescript:
-    strict: true
-    allowAny: false
-    preferInterfaces: true
-
-  comments:
-    onlyWhenNecessary: true
-
 backendRules:
-  asynchronousProgramming:
-    - Usar async/await.
-    - Evitar callbacks.
-  try/catch:
-    - Manejar errores en todos los casos.
-    - No ignorar errores.
-    - Usar filtros de excepción en NestJS.
-  controllers:
-    - Solo reciben solicitudes HTTP.
-    - Nunca contienen lógica de negocio.
-
-  services:
-    - Toda la lógica de negocio vive aquí.
-
-  repositories:
-    - Solo acceso a datos.
-
-  dto:
-    - Validar todas las entradas.
-    - Usar class-validator.
+  - Controllers only orchestrate requests.
+  - Business logic belongs in services.
+  - Data access belongs in repositories.
+  - Validate every DTO.
+  - Use async/await.
+  - Handle every exception.
 
 frontendRules:
-  components:
-    - Deben ser pequeños y reutilizables.
-
-  pages:
-    - Solo composición de componentes.
-
-  hooks:
-    - Extraer lógica reutilizable.
-
-  api:
-    - Centralizar llamadas en services.
+  - Components must be small and reusable.
+  - Pages compose components.
+  - Shared logic goes into hooks.
+  - API calls belong in services.
 
 security:
-  - Nunca guardar contraseñas sin hash.
-  - Usar bcrypt.
-  - Access Token JWT.
-  - Refresh Token.
-  - Variables de entorno para secretos.
-  - No subir archivos .env.
-  - Validar toda entrada del usuario.
-  - Sanitizar datos cuando corresponda.
+  - Hash passwords.
+  - Validate input.
+  - Store secrets in environment variables.
+  - Never commit .env.
 
 testing:
-  - Toda lógica importante debe tener pruebas.
-  - Mantener cobertura en servicios críticos.
-  - Ejecutar tests antes de cada commit.
+  required: true
+  rules:
+    - Every new service MUST have unit tests.
+    - Every endpoint MUST have tests when applicable.
+    - Critical business logic MUST be tested.
+    - Tests are mandatory before completing a task.
+
+definitionOfDone:
+  - Feature implemented.
+  - Unit tests implemented.
+  - Tests passing.
+  - Lint passing.
+  - No TypeScript errors.
+  - Documentation updated if needed.
+
+workflow:
+  planning:
+    - Explain the implementation plan.
+    - Wait for approval on non-trivial tasks.
+  execution:
+    - Work on one task at a time.
+    - Summarize changes at the end.
 
 git:
   convention: Conventional Commits
-
   prefixes:
     - feat
     - fix
@@ -173,53 +157,21 @@ git:
     - test
     - chore
 
-workflow:
-  planning:
-    - Antes de implementar una tarea no trivial, presentar un plan.
-    - Esperar aprobación antes de comenzar.
-
-  execution:
-    - Trabajar una tarea a la vez.
-    - Al finalizar, resumir los cambios realizados.
-    - Si la confianza es menor al 80%, pedir aclaración.
-
-doNot:
-  - No instalar dependencias sin aprobación.
-  - No modificar código legado sin autorización.
-  - No usar any sin justificación.
-  - No duplicar código.
-  - No colocar lógica de negocio en controladores.
-  - No acceder directamente a la base de datos desde los controladores.
-  - No hardcodear secretos.
-  - No ignorar errores.
-  - No romper la arquitectura Feature First.
-  - No subir archivos .env al repositorio.
 conventions:
-  - Seguir las convenciones de la comunidad para cada tecnología.
-  - Mantener consistencia en el estilo de código.
-  - Evitar reinventar la rueda, usar librerías existentes cuando sea posible.
-  - Codigo limpio y legible, priorizando la claridad sobre la brevedad.
-  - Si hay que instalar una dependencia, preguntar primero.
-  - cuando creamos un nuevo modulo en nestjs usa nest g res NombreModulo --no-spec
-  - como gestor de paquetes usar pnpm
+  - Use pnpm.
+  - Prefer interfaces.
+  - Keep code readable.
+  - Use "nest g resource <name> --no-spec" only if tests will be created manually afterwards.
+  - Never duplicate code.
+
 documentation:
   architecture: .openspec/architecture.md
   conventions: .openspec/conventions.md
   techStack: .openspec/tech-stack.md
 
-rules:
-  proposal:
-    - Las funciones y variables deben estar en inglés.
-  design:
-    - camelCase para variables y funciones.
-    - Las funciones y variables deben estar en inglés.
-  specs:
-    - Las funciones y variables deben estar en inglés.
-  tasks:
-    - Las funciones y variables deben estar en inglés.
 goals:
-  - Código limpio.
-  - Alta reutilización.
-  - Fácil mantenimiento.
-  - Escalable para nuevos módulos.
-  - Preparado para reutilizar como plantilla en futuros proyectos.
+  - Clean code.
+  - High reuse.
+  - Scalability.
+  - Maintainability.
+  - Production-ready template.

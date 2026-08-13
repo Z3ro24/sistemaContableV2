@@ -26,7 +26,10 @@ export class AuthController {
   @Get('csrf-token')
   @Public()
   @HttpCode(HttpStatus.OK)
-  getCsrfToken(@Req() request: express.Request, @Res() response: express.Response) {
+  getCsrfToken(
+    @Req() request: express.Request,
+    @Res() response: express.Response,
+  ) {
     const csrfToken = generateCsrfToken(request, response, { overwrite: true });
     return response.json({ csrfToken });
   }
@@ -83,7 +86,9 @@ export class AuthController {
     }
 
     const result = await this.authService.validateOAuthUser(googleUser);
-
+    setTimeout(() => {
+      console.log('Han pasado 10 segundos');
+    }, 10 * 1000);
     response.cookie('accessToken', result.accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',

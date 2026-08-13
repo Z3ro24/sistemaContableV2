@@ -12,18 +12,20 @@ datasource db {
 }
 
 model User {
-  id            String         @id @default(uuid()) @db.Uuid
-  name          String
-  email         String         @unique
-  password      String
-  isActive      Boolean        @default(true)
-  role          String         @default("USER")
-  createdAt     DateTime       @default(now()) @map("created_at")
-  updatedAt     DateTime       @updatedAt @map("upddated_at")
-  deleteAt      DateTime?      @map("deleteAt")
-  refreshTokens RefreshToken[]
-  workers       Worker[]
-  companies     Company[]
+  id                String             @id @default(uuid()) @db.Uuid
+  name              String
+  email             String             @unique
+  password          String
+  isActive          Boolean            @default(true)
+  role              String             @default("USER")
+  createdAt         DateTime           @default(now()) @map("created_at")
+  updatedAt         DateTime           @updatedAt @map("upddated_at")
+  deleteAt          DateTime?          @map("deleteAt")
+  refreshTokens     RefreshToken[]
+  workers           Worker[]
+  companies         Company[]
+  monthlyParameters MonthlyParameter[]
+  exportLogs        ExportLog[]
 
   @@map("users")
 }
@@ -40,31 +42,249 @@ model RefreshToken {
   @@map("refresh_tokens")
 }
 
+// ==========================================
+// 1. TABLAS PARAMÉTRICAS / CATÁLOGOS (PREVIRED / SII)
+// ==========================================
+
+model Afp {
+  id             Int      @id @default(autoincrement())
+  name           String
+  previredCode   String   @map("previred_code")
+  commissionRate Decimal  @map("commission_rate") @db.Decimal(8, 4)
+  workers        Worker[]
+
+  @@map("afp")
+}
+
+model HealthInstitution {
+  id           Int      @id @default(autoincrement())
+  name         String
+  previredCode String   @map("previred_code")
+  isIsapre     Boolean  @default(false) @map("is_isapre")
+  workers      Worker[]
+
+  @@map("health_institutions")
+}
+
+model ContractType {
+  // 1: Indefinido, 2: Plazo Fijo, 3: Por Obra/Faena
+  id                Int      @id @default(autoincrement())
+  name              String
+  dtCode            String   @map("dt_code")
+  afcWorkerDiscount Boolean  @default(true) @map("afc_worker_discount")
+  workers           Worker[]
+
+  @@map("contract_types")
+}
+
+model Bank {
+  id       Int      @id @default(autoincrement())
+  name     String
+  sbifCode String   @map("sbif_code")
+  workers  Worker[]
+
+  @@map("banks")
+}
+
+model CostCenter {
+  id      Int      @id @default(autoincrement())
+  code    String
+  name    String
+  workers Worker[]
+
+  @@map("cost_centers")
+}
+
+model JobPosition {
+  id      Int      @id @default(autoincrement())
+  name    String
+  workers Worker[]
+
+  @@map("job_positions")
+}
+
+// ==========================================
+// 2. EMPRESA Y TRABAJADORES (COMPANY & WORKER)
+// ==========================================
+
 model Company {
-  id         Int      @id @default(autoincrement())
-  name       String
-  rutCompany String   @map("rut_company")
-  userId     String   @map("user_id") @db.Uuid
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  workers    Worker[]
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
+  id                   Int      @id @default(autoincrement())
+  name                 String
+  rutCompany           String   @map("rut_company")
+  address              String?  @map("address")
+  digitalCertificateId BigInt?  @map("digital_certificate_id")
+  userId               String   @map("user_id") @db.Uuid
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workers              Worker[]
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
 
   @@unique([rutCompany, userId])
   @@map("companies")
 }
 
 model Worker {
-  id        Int      @id @default(autoincrement())
-  name      String
-  rut       String
-  userId    String   @map("user_id") @db.Uuid
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  companyId Int?     @map("company_id")
-  company   Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id                  Int                @id @default(autoincrement())
+  name                String
+  paternalLastName    String?            @map("paternal_last_name")
+  maternalLastName    String?            @map("maternal_last_name")
+  rut                 String
+  entryDate           DateTime?          @map("entry_date")
+  baseSalary          Decimal?           @default(0.0) @map("base_salary") @db.Decimal(14, 2)
+  userId              String             @map("user_id") @db.Uuid
+  user                User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyId           Int?               @map("company_id")
+  company             Company?           @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  afpId               Int?               @map("afp_id")
+  afp                 Afp?               @relation(fields: [afpId], references: [id], onDelete: SetNull)
+  healthInstitutionId Int?               @map("health_institution_id")
+  healthInstitution   HealthInstitution? @relation(fields: [healthInstitutionId], references: [id], onDelete: SetNull)
+  healthAgreedUf      Decimal?           @default(0.0) @map("health_agreed_uf") @db.Decimal(12, 3)
+  contractTypeId      Int?               @map("contract_type_id")
+  contractType        ContractType?      @relation(fields: [contractTypeId], references: [id], onDelete: SetNull)
+  bankId              Int?               @map("bank_id")
+  bank                Bank?              @relation(fields: [bankId], references: [id], onDelete: SetNull)
+  bankAccountType     String?            @map("bank_account_type")
+  bankAccountNumber   String?            @map("bank_account_number")
+  costCenterId        Int?               @map("cost_center_id")
+  costCenter          CostCenter?        @relation(fields: [costCenterId], references: [id], onDelete: SetNull)
+  jobPositionId       Int?               @map("job_position_id")
+  jobPosition         JobPosition?       @relation(fields: [jobPositionId], references: [id], onDelete: SetNull)
+  novelties           MonthlyNovelty[]
+  payrolls            Payroll[]
+  createdAt           DateTime           @default(now()) @map("created_at")
+  updatedAt           DateTime           @updatedAt @map("updated_at")
 
   @@unique([rut, userId])
   @@map("workers")
+}
+
+// ==========================================
+// 3. PARÁMETROS MENSUALES DE CÁLCULO (SII / PREVIRED)
+// ==========================================
+
+model MonthlyParameter {
+  id                      Int                      @id @default(autoincrement())
+  periodYyyyMm            String                   @map("period_yyyy_mm")
+  ufClosingValue          Decimal                  @map("uf_closing_value") @db.Decimal(14, 2)
+  utmValue                Decimal                  @map("utm_value") @db.Decimal(14, 2)
+  minimumWage             Decimal                  @map("minimum_wage") @db.Decimal(14, 2)
+  afpCappingUf            Decimal                  @map("afp_capping_uf") @db.Decimal(10, 2)
+  afcCappingUf            Decimal                  @map("afc_capping_uf") @db.Decimal(10, 2)
+  sisRate                 Decimal                  @map("sis_rate") @db.Decimal(8, 4)
+  userId                  String                   @map("user_id") @db.Uuid
+  user                    User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  uniqueTaxBrackets       UniqueTaxBracket[]
+  familyAllowanceBrackets FamilyAllowanceBracket[]
+  createdAt               DateTime                 @default(now()) @map("created_at")
+  updatedAt               DateTime                 @updatedAt @map("updated_at")
+
+  @@unique([periodYyyyMm, userId])
+  @@map("monthly_parameters")
+}
+
+model UniqueTaxBracket {
+  id                 Int              @id @default(autoincrement())
+  monthlyParameterId Int              @map("monthly_parameter_id")
+  monthlyParameter   MonthlyParameter @relation(fields: [monthlyParameterId], references: [id], onDelete: Cascade)
+  bracketNumber      Int              @map("bracket_number")
+  fromUtm            Decimal          @map("from_utm") @db.Decimal(14, 2)
+  toUtm              Decimal?         @map("to_utm") @db.Decimal(14, 2)
+  factor             Decimal          @db.Decimal(8, 4)
+  deductionUtm       Decimal          @map("deduction_utm") @db.Decimal(14, 2)
+
+  @@map("unique_tax_brackets")
+}
+
+model FamilyAllowanceBracket {
+  id                 Int              @id @default(autoincrement())
+  monthlyParameterId Int              @map("monthly_parameter_id")
+  monthlyParameter   MonthlyParameter @relation(fields: [monthlyParameterId], references: [id], onDelete: Cascade)
+  bracketLetter      String           @map("bracket_letter") // 'A', 'B', 'C', 'D'
+  incomeFrom         Decimal          @map("income_from") @db.Decimal(14, 2)
+  incomeTo           Decimal          @map("income_to") @db.Decimal(14, 2)
+  amountPerDependent Decimal          @map("amount_per_dependent") @db.Decimal(14, 2)
+
+  @@map("family_allowance_brackets")
+}
+
+// ==========================================
+// 4. OPERACIÓN MENSUAL E HISTÓRICO LIQUIDACIÓN
+// ==========================================
+
+model MonthlyNovelty {
+  id                    Int      @id @default(autoincrement())
+  workerId              Int      @map("worker_id")
+  worker                Worker   @relation(fields: [workerId], references: [id], onDelete: Cascade)
+  periodYyyyMm          String   @map("period_yyyy_mm")
+  workedDays            Int      @default(30) @map("worked_days")
+  sickLeaveDays         Int      @default(0) @map("sick_leave_days")
+  absenceDays           Int      @default(0) @map("absence_days")
+  overtime50Hrs         Decimal  @default(0.0) @map("overtime_50_hrs") @db.Decimal(8, 2)
+  overtime100Hrs        Decimal  @default(0.0) @map("overtime_100_hrs") @db.Decimal(8, 2)
+  familyDependentsCount Int      @default(0) @map("family_dependents_count")
+  otherTaxableIncome    Decimal  @default(0.0) @map("other_taxable_income") @db.Decimal(14, 2)
+  otherNonTaxableIncome Decimal  @default(0.0) @map("other_non_taxable_income") @db.Decimal(14, 2)
+  otherDeductions       Decimal  @default(0.0) @map("other_deductions") @db.Decimal(14, 2)
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  @@unique([workerId, periodYyyyMm])
+  @@map("monthly_novelties")
+}
+
+model Payroll {
+  id                   Int             @id @default(autoincrement())
+  workerId             Int             @map("worker_id")
+  worker               Worker          @relation(fields: [workerId], references: [id], onDelete: Cascade)
+  periodYyyyMm         String          @map("period_yyyy_mm")
+  issueDate            DateTime        @default(now()) @map("issue_date")
+  baseSalaryAgreed     Decimal         @map("base_salary_agreed") @db.Decimal(14, 2)
+  totalTaxable         Decimal         @map("total_taxable") @db.Decimal(14, 2)
+  totalNonTaxable      Decimal         @map("total_non_taxable") @db.Decimal(14, 2)
+  totalLegalDeductions Decimal         @map("total_legal_deductions") @db.Decimal(14, 2)
+  totalOtherDeductions Decimal         @map("total_other_deductions") @db.Decimal(14, 2)
+  netPayable           Decimal         @map("net_payable") @db.Decimal(14, 2)
+  afpHistoricalName    String          @map("afp_historical_name")
+  afpHistoricalRate    Decimal         @map("afp_historical_rate") @db.Decimal(8, 4)
+  healthHistoricalName String          @map("health_historical_name")
+  paymentStatus        String          @default("PENDIENTE") @map("payment_status")
+  details              PayrollDetail[]
+  createdAt            DateTime        @default(now()) @map("created_at")
+  updatedAt            DateTime        @updatedAt @map("updated_at")
+
+  @@unique([workerId, periodYyyyMm])
+  @@map("payrolls")
+}
+
+model PayrollDetail {
+  id           Int     @id @default(autoincrement())
+  payrollId    Int     @map("payroll_id")
+  payroll      Payroll @relation(fields: [payrollId], references: [id], onDelete: Cascade)
+  conceptCode  String  @map("concept_code")
+  conceptLabel String  @map("concept_label")
+  conceptType  String  @map("concept_type") // 'TAXABLE_INCOME', 'NON_TAXABLE_INCOME', 'LEGAL_DEDUCTION', 'OTHER_DEDUCTION'
+  amount       Decimal @db.Decimal(14, 2)
+
+  @@map("payroll_details")
+}
+
+// ==========================================
+// 5. HISTORIAL DE EXPORTACIONES (AUDIT LOGS)
+// ==========================================
+
+model ExportLog {
+  id           Int      @id @default(autoincrement())
+  userId       String   @map("user_id") @db.Uuid
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyId    Int?     @map("company_id")
+  exportType   String   @map("export_type") // 'PREVIRED_TXT', 'LRE_CSV', 'BANCO_SANTANDER', 'BANCO_ESTADO_PAE', 'BANCO_DE_CHILE', 'UNIVERSAL_TEF'
+  periodYyyyMm String   @map("period_yyyy_mm")
+  recordCount  Int      @map("record_count")
+  totalAmount  Decimal  @default(0.0) @map("total_amount") @db.Decimal(14, 2)
+  filename     String
+  fileData     String?  @db.Text
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@map("export_logs")
 }

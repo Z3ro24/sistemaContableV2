@@ -2,6 +2,10 @@ import React, { useState } from 'react';
 import { Dialog, DialogPanel, DialogTitle } from '@headlessui/react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { XMarkIcon, BuildingOfficeIcon } from '@heroicons/react/24/outline';
+import { Save } from 'lucide-react';
+import { toast } from 'sonner';
+import { useAppDispatch } from '../../store/store';
+import { setSelectedCompanyId } from '../../store/slices/company.slice';
 import companiesService from '../../services/companiesService';
 import { formatRut, validateRut } from '../../utils/rutUtils';
 import { companySchema } from '../../validators/companyValidator';
@@ -15,20 +19,29 @@ interface CompanyModalProps {
 export const CompanyModal: React.FC<CompanyModalProps> = ({ isOpen, onClose }) => {
   const [name, setName] = useState('');
   const [rutCompany, setRutCompany] = useState('');
+  const [address, setAddress] = useState('');
   const [rutError, setRutError] = useState('');
   const [apiError, setApiError] = useState<string | null>(null);
 
   const queryClient = useQueryClient();
 
+  const dispatch = useAppDispatch();
+
   const createMutation = useMutation({
     mutationFn: companiesService.create,
-    onSuccess: () => {
+    onSuccess: (newCompany) => {
       queryClient.invalidateQueries({ queryKey: ['companies'] });
+      if (newCompany?.id) {
+        dispatch(setSelectedCompanyId(newCompany.id.toString()));
+      }
+      toast.success('Empresa guardada y seleccionada como activa exitosamente');
       handleClose();
     },
     onError: (err: any) => {
       const message = err.response?.data?.message || 'Error al crear la empresa';
-      setApiError(Array.isArray(message) ? message.join(', ') : message);
+      const errorStr = Array.isArray(message) ? message.join(', ') : message;
+      setApiError(errorStr);
+      toast.error(errorStr);
     },
   });
 
@@ -43,6 +56,7 @@ export const CompanyModal: React.FC<CompanyModalProps> = ({ isOpen, onClose }) =
   const handleClose = () => {
     setName('');
     setRutCompany('');
+    setAddress('');
     setRutError('');
     setApiError(null);
     onClose();
@@ -62,8 +76,10 @@ export const CompanyModal: React.FC<CompanyModalProps> = ({ isOpen, onClose }) =
       const formattedErrors = validationResult.error.format();
       if (formattedErrors.name?._errors?.[0]) {
         setApiError(formattedErrors.name._errors[0]);
+        toast.error(formattedErrors.name._errors[0]);
       } else if (formattedErrors.rutCompany?._errors?.[0]) {
         setRutError(formattedErrors.rutCompany._errors[0]);
+        toast.error(formattedErrors.rutCompany._errors[0]);
       }
       return;
     }
@@ -71,6 +87,7 @@ export const CompanyModal: React.FC<CompanyModalProps> = ({ isOpen, onClose }) =
     createMutation.mutate({
       name: validationResult.data.name,
       rutCompany: validationResult.data.rutCompany,
+      address: address.trim() || undefined,
     });
   };
 
@@ -106,7 +123,7 @@ export const CompanyModal: React.FC<CompanyModalProps> = ({ isOpen, onClose }) =
             {/* Field: Name */}
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-[#787774] mb-1.5">
-                Nombre de la Empresa
+                Razón Social / Nombre
               </label>
               <input
                 type="text"
@@ -121,7 +138,7 @@ export const CompanyModal: React.FC<CompanyModalProps> = ({ isOpen, onClose }) =
             {/* Field: RUT */}
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-[#787774] mb-1.5">
-                RUT de la Empresa
+                RUT Empresa
               </label>
               <input
                 type="text"
@@ -139,6 +156,20 @@ export const CompanyModal: React.FC<CompanyModalProps> = ({ isOpen, onClose }) =
               {rutError && <p className="mt-1 text-xs text-rose-600 font-medium">{rutError}</p>}
             </div>
 
+            {/* Field: Address */}
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-[#787774] mb-1.5">
+                Dirección Comercial (Opcional)
+              </label>
+              <input
+                type="text"
+                placeholder="Ej: Av. Providencia 1234, Oficina 501"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                className="w-full rounded-xl border border-neutral-200 bg-white px-3.5 py-2.5 text-sm text-[#37352F] placeholder-[#787774]/60 shadow-2xs focus:border-[#37352F] focus:outline-none focus:ring-1 focus:ring-[#37352F]"
+              />
+            </div>
+
             {/* Form Actions */}
             <div className="flex items-center justify-end gap-3 pt-3 border-t border-neutral-200/60 mt-6">
               <button
@@ -151,9 +182,10 @@ export const CompanyModal: React.FC<CompanyModalProps> = ({ isOpen, onClose }) =
               <button
                 type="submit"
                 disabled={createMutation.isPending}
-                className="rounded-xl bg-[#37352F] px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-[#201F1C] disabled:opacity-50"
+                className="flex items-center gap-2 rounded-xl bg-[#37352F] px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-[#201F1C] disabled:opacity-50"
               >
-                {createMutation.isPending ? 'Guardando...' : 'Guardar Empresa'}
+                <Save className="h-4 w-4 text-emerald-400" />
+                <span>{createMutation.isPending ? 'Guardando...' : 'Guardar Empresa'}</span>
               </button>
             </div>
           </form>

@@ -38,6 +38,24 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Mutex & Queue variables to handle concurrent 401 token refresh requests
+let isRefreshing = false;
+let failedQueue: Array<{
+  resolve: (value?: unknown) => void;
+  reject: (reason?: any) => void;
+}> = [];
+
+const processQueue = (error: any = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve();
+    }
+  });
+  failedQueue = [];
+};
+
 // Response interceptor for automatic token refresh on HTTP 401
 api.interceptors.response.use(
   (response) => response,
@@ -51,14 +69,25 @@ api.interceptors.response.use(
       !originalRequest.url?.includes('/auth/login') &&
       !originalRequest.url?.includes('/auth/refresh')
     ) {
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then(() => api(originalRequest))
+          .catch((err) => Promise.reject(err));
+      }
+
       originalRequest._retry = true;
+      isRefreshing = true;
 
       try {
         // Attempt to refresh access token using HTTP-Only refresh cookie
         await api.post('/auth/refresh');
+        processQueue(null);
         // Retry original request with newly issued cookie
         return api(originalRequest);
       } catch (refreshError) {
+        processQueue(refreshError);
         // Clear auth state and redirect to login if refresh fails
         clearCsrfToken();
         store.dispatch(logout());
@@ -66,6 +95,8 @@ api.interceptors.response.use(
           window.location.href = '/';
         }
         return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
       }
     }
 

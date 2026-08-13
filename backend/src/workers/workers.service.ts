@@ -40,12 +40,31 @@ export class WorkersService {
     return this.prisma.worker.create({
       data: {
         name: createWorkerDto.name.trim(),
+        paternalLastName: createWorkerDto.paternalLastName ? createWorkerDto.paternalLastName.trim() : null,
+        maternalLastName: createWorkerDto.maternalLastName ? createWorkerDto.maternalLastName.trim() : null,
         rut: formattedRut,
+        entryDate: createWorkerDto.entryDate ? new Date(createWorkerDto.entryDate) : null,
+        baseSalary: createWorkerDto.baseSalary !== undefined ? createWorkerDto.baseSalary : 0.0,
         companyId: createWorkerDto.companyId || null,
+        afpId: createWorkerDto.afpId || null,
+        healthInstitutionId: createWorkerDto.healthInstitutionId || null,
+        healthAgreedUf: createWorkerDto.healthAgreedUf !== undefined ? createWorkerDto.healthAgreedUf : 0.0,
+        contractTypeId: createWorkerDto.contractTypeId || null,
+        bankId: createWorkerDto.bankId || null,
+        bankAccountType: createWorkerDto.bankAccountType || null,
+        bankAccountNumber: createWorkerDto.bankAccountNumber || null,
+        costCenterId: createWorkerDto.costCenterId || null,
+        jobPositionId: createWorkerDto.jobPositionId || null,
         userId,
       },
       include: {
         company: true,
+        afp: true,
+        healthInstitution: true,
+        contractType: true,
+        bank: true,
+        costCenter: true,
+        jobPosition: true,
       },
     });
   }
@@ -56,6 +75,12 @@ export class WorkersService {
       orderBy: { createdAt: 'desc' },
       include: {
         company: true,
+        afp: true,
+        healthInstitution: true,
+        contractType: true,
+        bank: true,
+        costCenter: true,
+        jobPosition: true,
       },
     });
   }
@@ -63,7 +88,15 @@ export class WorkersService {
   async findOne(userId: string, id: number) {
     const worker = await this.prisma.worker.findFirst({
       where: { id, userId },
-      include: { company: true },
+      include: {
+        company: true,
+        afp: true,
+        healthInstitution: true,
+        contractType: true,
+        bank: true,
+        costCenter: true,
+        jobPosition: true,
+      },
     });
 
     if (!worker) {
@@ -80,6 +113,45 @@ export class WorkersService {
 
     if (updateWorkerDto.name !== undefined) {
       dataToUpdate.name = updateWorkerDto.name.trim();
+    }
+    if (updateWorkerDto.paternalLastName !== undefined) {
+      dataToUpdate.paternalLastName = updateWorkerDto.paternalLastName ? updateWorkerDto.paternalLastName.trim() : null;
+    }
+    if (updateWorkerDto.maternalLastName !== undefined) {
+      dataToUpdate.maternalLastName = updateWorkerDto.maternalLastName ? updateWorkerDto.maternalLastName.trim() : null;
+    }
+    if (updateWorkerDto.entryDate !== undefined) {
+      dataToUpdate.entryDate = updateWorkerDto.entryDate ? new Date(updateWorkerDto.entryDate) : null;
+    }
+    if (updateWorkerDto.baseSalary !== undefined) {
+      dataToUpdate.baseSalary = updateWorkerDto.baseSalary;
+    }
+    if (updateWorkerDto.afpId !== undefined) {
+      dataToUpdate.afpId = updateWorkerDto.afpId;
+    }
+    if (updateWorkerDto.healthInstitutionId !== undefined) {
+      dataToUpdate.healthInstitutionId = updateWorkerDto.healthInstitutionId;
+    }
+    if (updateWorkerDto.healthAgreedUf !== undefined) {
+      dataToUpdate.healthAgreedUf = updateWorkerDto.healthAgreedUf;
+    }
+    if (updateWorkerDto.contractTypeId !== undefined) {
+      dataToUpdate.contractTypeId = updateWorkerDto.contractTypeId;
+    }
+    if (updateWorkerDto.bankId !== undefined) {
+      dataToUpdate.bankId = updateWorkerDto.bankId;
+    }
+    if (updateWorkerDto.bankAccountType !== undefined) {
+      dataToUpdate.bankAccountType = updateWorkerDto.bankAccountType;
+    }
+    if (updateWorkerDto.bankAccountNumber !== undefined) {
+      dataToUpdate.bankAccountNumber = updateWorkerDto.bankAccountNumber;
+    }
+    if (updateWorkerDto.costCenterId !== undefined) {
+      dataToUpdate.costCenterId = updateWorkerDto.costCenterId;
+    }
+    if (updateWorkerDto.jobPositionId !== undefined) {
+      dataToUpdate.jobPositionId = updateWorkerDto.jobPositionId;
     }
 
     if (updateWorkerDto.companyId !== undefined) {
@@ -122,6 +194,12 @@ export class WorkersService {
       data: dataToUpdate,
       include: {
         company: true,
+        afp: true,
+        healthInstitution: true,
+        contractType: true,
+        bank: true,
+        costCenter: true,
+        jobPosition: true,
       },
     });
   }

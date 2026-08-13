@@ -7,10 +7,36 @@ const routeNameMap: Record<string, string> = {
   profile: 'Mi Perfil',
   settings: 'Configuración',
   transactions: 'Transacciones',
-  reports: 'Reportes',
-  workers: 'Personas',
-  companies: 'Empresas',
+  reports: 'Archivos y Reportes',
+  workers: 'Personas / Ficha de Empleados',
+  companies: 'Empresas & Sucursales',
   edit: 'Editar',
+  payrolls: 'Procesar Liquidaciones',
+  parameters: 'Parámetros Mensuales',
+  lre: 'Libro de Remuneraciones (LRE)',
+  hr: 'RRHH & Sueldos',
+  novelties: 'Novedades del Mes',
+  history: 'Histórico de Liquidaciones',
+  previred: 'PreviRed (.txt)',
+  'bank-transfers': 'Pago Masivo a Bancos',
+  accounting: 'Contabilidad & Finanzas',
+  'chart-of-accounts': 'Plan de Cuentas',
+  vouchers: 'Comprobantes Contables',
+  journal: 'Libro Diario',
+  ledger: 'Libro Mayor',
+  'purchases-book': 'Libro de Compras',
+  'sales-book': 'Libro de Ventas',
+  'balance-8-cols': 'Balance 8 Columnas',
+  'classified-balance': 'Balance Clasificado',
+  'p-and-l': 'Estado de Resultados (P&L)',
+  reconciliation: 'Conciliación Bancaria',
+  'sales-purchases': 'Compras y Ventas',
+  purchases: 'Registro de Compras (RCV)',
+  sales: 'Registro de Ventas',
+  bhe: 'Boletas de Honorarios (BHE)',
+  'receivables-payables': 'Cuentas por Cobrar / Pagar',
+  'sii-certificate': 'Certificado Digital SII',
+  users: 'Usuarios & Permisos',
 };
 
 export const Breadcrumbs: React.FC = () => {
@@ -18,7 +44,7 @@ export const Breadcrumbs: React.FC = () => {
   const pathnames = location.pathname.split('/').filter((x) => x);
 
   return (
-    <nav aria-label="Breadcrumb" className="mb-6 flex items-center gap-1.5 text-xs text-[#787774]">
+    <nav aria-label="Breadcrumb" className="mb-6 flex items-center gap-1.5 text-xs text-[#787774] flex-wrap">
       {/* Home Root Link */}
       <Link
         to="/home"

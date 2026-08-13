@@ -10,6 +10,15 @@ import { AuthGuard } from './auth/guards/auth.guard';
 import { RolesGuard } from './auth/guards/roles.guard';
 import { WorkersModule } from './workers/workers.module';
 import { CompaniesModule } from './companies/companies.module';
+import { CatalogsModule } from './catalogs/catalogs.module';
+import { MonthlyParametersModule } from './monthly-parameters/monthly-parameters.module';
+import { PayrollsModule } from './payrolls/payrolls.module';
+import { LreModule } from './lre/lre.module';
+import { ExportLogsModule } from './exports/export-logs/export-logs.module';
+import { PreviredExporterModule } from './exports/previred/previred-exporter.module';
+import { LreDtExporterModule } from './exports/lre-dt/lre-dt-exporter.module';
+import { BancosExporterModule } from './exports/bancos/bancos-exporter.module';
+import { NoveltiesModule } from './novelties/novelties.module';
 
 @Module({
   imports: [
@@ -24,6 +33,15 @@ import { CompaniesModule } from './companies/companies.module';
     ]),
     WorkersModule,
     CompaniesModule,
+    CatalogsModule,
+    MonthlyParametersModule,
+    PayrollsModule,
+    LreModule,
+    ExportLogsModule,
+    PreviredExporterModule,
+    LreDtExporterModule,
+    BancosExporterModule,
+    NoveltiesModule,
   ],
   controllers: [AppController],
   providers: [
