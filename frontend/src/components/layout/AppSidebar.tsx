@@ -14,7 +14,6 @@ import {
   Key,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import {
   Sidebar,
   SidebarHeader,
@@ -36,8 +35,8 @@ export const AppSidebar: React.FC = () => {
   return (
     <Sidebar collapsible="icon">
       {/* Brand Header */}
-      <SidebarHeader className="p-3">
-        <div className="flex items-center justify-between gap-2 px-1 py-1">
+      <SidebarHeader className="h-16 justify-center border-b border-neutral-200/80 px-4 py-0">
+        <div className="flex items-center justify-between gap-2 px-1">
           <div className="flex items-center gap-3 min-w-0">
             <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#37352F] text-white shadow-2xs">
               <TrendingUp className="size-5 text-amber-400" />
@@ -60,8 +59,6 @@ export const AppSidebar: React.FC = () => {
           </Badge>
         </div>
       </SidebarHeader>
-
-      <Separator className="mx-2 w-auto" />
 
       {/* Navigation Content */}
       <SidebarContent className="px-2 py-2">
